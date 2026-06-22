@@ -167,6 +167,14 @@
     font-weight: 500;
 }
 
+
+/* --- Records List (vertical stack) --- */
+.records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* --- Transfer Record Cards --- */
 .transfer-card {
     background: rgba(120, 100, 200, 0.04);
