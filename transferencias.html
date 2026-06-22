@@ -34,8 +34,8 @@
             </div>
         </div>
 
-        <!-- MAIN TRANSFERENCIAS SCREEN -->
-        <div class="screen hidden" id="transferenciasScreen">
+        <!-- MAIN SCREEN -->
+        <div class="screen hidden" id="mainScreen">
             <!-- Header -->
             <header class="app-header">
                 <div class="logo-section">
@@ -44,7 +44,7 @@
                     </a>
                     <div>
                         <h1 class="app-title">Transferencias</h1>
-                        <p class="app-subtitle">Envío y recepción entre locales</p>
+                        <p class="app-subtitle" id="roleSubtitle">Envío y recepción entre locales</p>
                     </div>
                 </div>
                 <div class="header-right">
@@ -55,190 +55,147 @@
                 </div>
             </header>
 
-            <!-- Tab Switcher -->
-            <div class="tab-bar">
-                <button class="tab-btn active" data-tab="enviar">
-                    <span class="tab-icon">📤</span> Enviar
-                </button>
-                <button class="tab-btn" data-tab="recibir">
-                    <span class="tab-icon">📥</span> Pendientes
-                    <span class="tab-badge hidden" id="pendingBadge">0</span>
-                </button>
-                <button class="tab-btn" data-tab="historial">
-                    <span class="tab-icon">📋</span> Historial
-                </button>
+            <!-- Alert Banner (pending items needing my weight) -->
+            <div class="alert-banner hidden" id="alertBanner">
+                <span class="alert-icon">⚡</span>
+                <span class="alert-text" id="alertText">0 pendientes de tu peso</span>
             </div>
 
-            <!-- TAB: Enviar -->
-            <section class="tab-content active" id="tab-enviar">
-                <div class="card form-card">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📤</span>
-                            Nueva Transferencia
-                        </h2>
-                        <span class="card-badge badge-transfer">Envío</span>
-                    </div>
-                    <form id="enviarForm">
-                        <div class="form-group">
-                            <label for="productoInput" class="form-label">
-                                <span class="label-icon">📦</span> Artículo
-                            </label>
-                            <div class="searchable-select" id="productoCombobox">
-                                <div class="input-wrapper">
-                                    <input type="text" id="productoInput" placeholder="Buscar artículo..." autocomplete="off" required>
-                                    <span class="input-suffix search-icon">🔍</span>
-                                </div>
-                                <input type="hidden" id="productoValue">
-                                <div class="searchable-dropdown hidden" id="productoDropdown">
-                                    <div class="searchable-list" id="productoList"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="destinoSelect" class="form-label">
-                                <span class="label-icon">📍</span> Enviar a
-                            </label>
-                            <div class="select-wrapper">
-                                <select id="destinoSelect" required>
-                                    <option value="" disabled selected>Selecciona destino...</option>
-                                </select>
-                                <div class="select-arrow">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pesoEnvio" class="form-label">
-                                <span class="label-icon">⚖️</span> Peso de envío
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="number" id="pesoEnvio" placeholder="0" min="0" step="1" required>
-                                <span class="input-suffix">g</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="notasEnvio" class="form-label">
-                                <span class="label-icon">📝</span> Notas (opcional)
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="notasEnvio" placeholder="Observaciones...">
-                            </div>
-                        </div>
-
-                        <div class="form-auto-info">
-                            <div class="auto-chip"><span>📍</span><span id="autoLocalEnvio">—</span></div>
-                            <div class="auto-chip"><span>👤</span><span id="autoUserEnvio">—</span></div>
-                            <div class="auto-chip"><span>📅</span><span id="autoDateEnvio">—</span></div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn-submit btn-transfer" id="enviarBtn">
-                                <span class="btn-text">Enviar Transferencia</span>
-                                <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
-                                <span class="btn-icon">→</span>
-                            </button>
-                        </div>
-                    </form>
+            <!-- New Record Form -->
+            <div class="card form-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📝</span>
+                        Nuevo Registro
+                    </h2>
                 </div>
-            </section>
+                <form id="nuevoForm">
+                    <div class="form-group">
+                        <label for="productoInput" class="form-label">
+                            <span class="label-icon">📦</span> Artículo
+                        </label>
+                        <div class="searchable-select" id="productoCombobox">
+                            <div class="input-wrapper">
+                                <input type="text" id="productoInput" placeholder="Buscar artículo..." autocomplete="off" required>
+                                <span class="input-suffix search-icon">🔍</span>
+                            </div>
+                            <input type="hidden" id="productoValue">
+                            <div class="searchable-dropdown hidden" id="productoDropdown">
+                                <div class="searchable-list" id="productoList"></div>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- TAB: Pendientes (Recibir) -->
-            <section class="tab-content" id="tab-recibir">
-                <div class="card records-card">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📥</span>
-                            Transferencias Pendientes
-                        </h2>
-                        <button class="btn-refresh" id="refreshPendientes" title="Actualizar">
+                    <!-- Destination (only for Laboratorio/Production) -->
+                    <div class="form-group" id="destinoGroup">
+                        <label for="destinoSelect" class="form-label">
+                            <span class="label-icon">📍</span> Enviar a
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="destinoSelect" required>
+                                <option value="" disabled selected>Selecciona destino...</option>
+                            </select>
+                            <div class="select-arrow">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pesoInput" class="form-label">
+                            <span class="label-icon">⚖️</span> <span id="pesoLabel">Peso</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="pesoInput" placeholder="0" min="0" step="1" required>
+                            <span class="input-suffix">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-auto-info">
+                        <div class="auto-chip"><span>👤</span><span id="autoUser">—</span></div>
+                        <div class="auto-chip"><span>📍</span><span id="autoLocal">—</span></div>
+                        <div class="auto-chip"><span>📅</span><span id="autoDate">—</span></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit btn-transfer" id="submitBtn">
+                            <span class="btn-text">Guardar Registro</span>
+                            <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Records Table -->
+            <div class="card records-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📋</span>
+                        Registros de Hoy
+                    </h2>
+                    <div class="card-header-actions">
+                        <div class="stat-chip stat-chip-purple">
+                            <span class="stat-dot stat-dot-purple"></span>
+                            <span id="recordCount">0</span> registros
+                        </div>
+                        <button class="btn-refresh" id="refreshBtn" title="Actualizar">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
                     </div>
-                    <div id="pendientesList" class="records-list"></div>
-                    <div class="empty-state" id="emptyPendientes">
-                        <div class="empty-icon">✅</div>
-                        <p class="empty-text">Sin transferencias pendientes</p>
-                        <p class="empty-sub">No hay envíos por recibir</p>
-                    </div>
                 </div>
-            </section>
-
-            <!-- TAB: Historial -->
-            <section class="tab-content" id="tab-historial">
-                <div class="card records-card">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📋</span>
-                            Historial de Hoy
-                        </h2>
-                        <div class="card-header-actions">
-                            <div class="stat-chip stat-chip-purple">
-                                <span class="stat-dot stat-dot-purple"></span>
-                                <span id="historialCount">0</span> registros
-                            </div>
-                            <button class="btn-refresh" id="refreshHistorial" title="Actualizar">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="historialList" class="records-list"></div>
-                    <div class="empty-state" id="emptyHistorial">
-                        <div class="empty-icon">📋</div>
-                        <p class="empty-text">Sin transferencias hoy</p>
-                        <p class="empty-sub">Envía o recibe producto para ver el historial</p>
-                    </div>
+                <div id="recordsList" class="records-list"></div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📋</div>
+                    <p class="empty-text">Sin registros hoy</p>
+                    <p class="empty-sub">Crea un nuevo registro para comenzar</p>
                 </div>
-            </section>
+            </div>
         </div>
 
-        <!-- Modal: Recibir transferencia -->
-        <div class="modal-overlay hidden" id="recibirModal">
+        <!-- Modal: Add missing weight -->
+        <div class="modal-overlay hidden" id="addWeightModal">
             <div class="modal-card card">
                 <div class="modal-header">
                     <h2 class="card-title">
-                        <span class="card-icon">📥</span>
-                        Confirmar Recepción
+                        <span class="card-icon">⚖️</span>
+                        <span id="modalTitle">Agregar Peso</span>
                     </h2>
                     <button class="modal-close" id="closeModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="modal-info-grid">
                         <div class="modal-info-item">
-                            <span class="modal-info-label">Producto</span>
+                            <span class="modal-info-label">Artículo</span>
                             <span class="modal-info-value" id="modalProducto">—</span>
                         </div>
                         <div class="modal-info-item">
-                            <span class="modal-info-label">Desde</span>
-                            <span class="modal-info-value" id="modalOrigen">—</span>
+                            <span class="modal-info-label">Destino</span>
+                            <span class="modal-info-value" id="modalDestino">—</span>
                         </div>
                         <div class="modal-info-item">
-                            <span class="modal-info-label">Enviado por</span>
-                            <span class="modal-info-value" id="modalEnviadoPor">—</span>
+                            <span class="modal-info-label">Registrado por</span>
+                            <span class="modal-info-value" id="modalCreadoPor">—</span>
                         </div>
                         <div class="modal-info-item">
-                            <span class="modal-info-label">Peso declarado</span>
-                            <span class="modal-info-value modal-peso-envio" id="modalPesoEnvio">—</span>
+                            <span class="modal-info-label" id="modalOtroPesoLabel">Peso declarado</span>
+                            <span class="modal-info-value modal-peso-envio" id="modalOtroPeso">—</span>
                         </div>
                     </div>
                     <div class="form-group" style="margin-top:16px;">
-                        <label for="pesoRecepcion" class="form-label">
-                            <span class="label-icon">⚖️</span> Peso recibido (tu báscula)
+                        <label for="modalPesoInput" class="form-label">
+                            <span class="label-icon">⚖️</span> <span id="modalPesoLabel">Tu peso</span>
                         </label>
                         <div class="input-wrapper">
-                            <input type="number" id="pesoRecepcion" placeholder="0" min="0" step="1" required>
+                            <input type="number" id="modalPesoInput" placeholder="0" min="0" step="1" required>
                             <span class="input-suffix">g</span>
                         </div>
                     </div>
                     <div id="pesDiff" class="pes-diff hidden"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel-edit" id="cancelRecibir">Cancelar</button>
-                    <button type="button" class="btn-submit btn-transfer" id="confirmarRecibir">
-                        <span class="btn-text">Confirmar Recepción</span>
+                    <button type="button" class="btn-cancel-edit" id="cancelModal">Cancelar</button>
+                    <button type="button" class="btn-submit btn-transfer" id="confirmModal">
+                        <span class="btn-text">Guardar Peso</span>
                         <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
                     </button>
                 </div>

@@ -1,5 +1,5 @@
 /* ============================================
-   YOOPS - Transferencias
+   YOOPS - Transferencias (Bidireccional)
    Application Logic
    ============================================ */
 
@@ -13,63 +13,64 @@ const HEADERS = {
     'Prefer': 'return=representation'
 };
 
-const LOCALES = ['Plaza Numa', 'Grand Plaza', 'Rio de Piedras', 'Laboratorio'];
+const LOCALES_TIENDA = ['Plaza Numa', 'Grand Plaza', 'Rio de Piedras'];
 
 let currentUser = null;
-let currentTab = 'enviar';
-let selectedTransfer = null; // for modal
+let isProduccion = false; // true = Laboratorio, false = tienda
+let allArticulos = [];
+let selectedRecord = null;
+let highlightedIdx = -1;
 
 // =============================================
 //  DOM
 // =============================================
 
 const notLoggedScreen = document.getElementById('notLoggedScreen');
-const transferenciasScreen = document.getElementById('transferenciasScreen');
+const mainScreen = document.getElementById('mainScreen');
+const roleSubtitle = document.getElementById('roleSubtitle');
 const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 
-// Tabs
-const tabBtns = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-const pendingBadge = document.getElementById('pendingBadge');
+// Alert
+const alertBanner = document.getElementById('alertBanner');
+const alertText = document.getElementById('alertText');
 
-// Send form
-const enviarForm = document.getElementById('enviarForm');
+// Form
+const nuevoForm = document.getElementById('nuevoForm');
 const productoInput = document.getElementById('productoInput');
 const productoValue = document.getElementById('productoValue');
 const productoDropdown = document.getElementById('productoDropdown');
 const productoList = document.getElementById('productoList');
+const destinoGroup = document.getElementById('destinoGroup');
 const destinoSelect = document.getElementById('destinoSelect');
-const pesoEnvio = document.getElementById('pesoEnvio');
-const notasEnvio = document.getElementById('notasEnvio');
-const enviarBtn = document.getElementById('enviarBtn');
+const pesoInput = document.getElementById('pesoInput');
+const pesoLabel = document.getElementById('pesoLabel');
+const submitBtn = document.getElementById('submitBtn');
 
 // Auto info
-const autoLocalEnvio = document.getElementById('autoLocalEnvio');
-const autoUserEnvio = document.getElementById('autoUserEnvio');
-const autoDateEnvio = document.getElementById('autoDateEnvio');
+const autoUser = document.getElementById('autoUser');
+const autoLocal = document.getElementById('autoLocal');
+const autoDate = document.getElementById('autoDate');
 
-// Pending
-const pendientesList = document.getElementById('pendientesList');
-const emptyPendientes = document.getElementById('emptyPendientes');
-const refreshPendientes = document.getElementById('refreshPendientes');
-
-// History
-const historialList = document.getElementById('historialList');
-const emptyHistorial = document.getElementById('emptyHistorial');
-const historialCount = document.getElementById('historialCount');
-const refreshHistorial = document.getElementById('refreshHistorial');
+// Records
+const recordsList = document.getElementById('recordsList');
+const emptyState = document.getElementById('emptyState');
+const recordCount = document.getElementById('recordCount');
+const refreshBtn = document.getElementById('refreshBtn');
 
 // Modal
-const recibirModal = document.getElementById('recibirModal');
+const addWeightModal = document.getElementById('addWeightModal');
 const closeModal = document.getElementById('closeModal');
-const cancelRecibir = document.getElementById('cancelRecibir');
-const confirmarRecibir = document.getElementById('confirmarRecibir');
+const cancelModal = document.getElementById('cancelModal');
+const confirmModal = document.getElementById('confirmModal');
+const modalTitle = document.getElementById('modalTitle');
 const modalProducto = document.getElementById('modalProducto');
-const modalOrigen = document.getElementById('modalOrigen');
-const modalEnviadoPor = document.getElementById('modalEnviadoPor');
-const modalPesoEnvio = document.getElementById('modalPesoEnvio');
-const pesoRecepcion = document.getElementById('pesoRecepcion');
+const modalDestino = document.getElementById('modalDestino');
+const modalCreadoPor = document.getElementById('modalCreadoPor');
+const modalOtroPesoLabel = document.getElementById('modalOtroPesoLabel');
+const modalOtroPeso = document.getElementById('modalOtroPeso');
+const modalPesoInput = document.getElementById('modalPesoInput');
+const modalPesoLabel = document.getElementById('modalPesoLabel');
 const pesDiff = document.getElementById('pesDiff');
 
 // Toast
@@ -97,14 +98,6 @@ function formatNumber(num) {
     return Number(num).toLocaleString('es-MX');
 }
 
-function formatTime(timeStr) {
-    if (!timeStr) return '—';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    const h = parseInt(parts[0], 10);
-    return `${h % 12 || 12}:${parts[1]} ${h >= 12 ? 'PM' : 'AM'}`;
-}
-
 function getTodayISO() {
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
@@ -114,30 +107,16 @@ function getTodayDisplay() {
     return new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function switchScreen(id) {
-    [notLoggedScreen, transferenciasScreen].forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+function formatDateTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-// =============================================
-//  Tab Navigation
-// =============================================
-
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        currentTab = tab;
-
-        tabBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        tabContents.forEach(tc => tc.classList.remove('active'));
-        document.getElementById(`tab-${tab}`).classList.add('active');
-
-        if (tab === 'recibir') loadPendientes();
-        if (tab === 'historial') loadHistorial();
-    });
-});
+function switchScreen(id) {
+    [notLoggedScreen, mainScreen].forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
 
 // =============================================
 //  Auth
@@ -167,26 +146,8 @@ async function verifySession() {
 }
 
 // =============================================
-//  Populate Destination Select
+//  Load Articulos
 // =============================================
-
-function populateDestinos() {
-    destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
-    LOCALES.forEach(local => {
-        if (local !== currentUser.nombre_local) {
-            const opt = document.createElement('option');
-            opt.value = local;
-            opt.textContent = `📍 ${local}`;
-            destinoSelect.appendChild(opt);
-        }
-    });
-}
-
-// =============================================
-//  Load Articulos from DB
-// =============================================
-
-let allArticulos = [];
 
 async function loadArticulos() {
     try {
@@ -204,10 +165,8 @@ async function loadArticulos() {
 }
 
 // =============================================
-//  Searchable Combobox Logic
+//  Searchable Combobox
 // =============================================
-
-let highlightedIdx = -1;
 
 function renderArticulosList(filter = '') {
     productoList.innerHTML = '';
@@ -228,7 +187,6 @@ function renderArticulosList(filter = '') {
         item.dataset.value = name;
         item.dataset.idx = idx;
 
-        // Highlight matching text
         if (query) {
             const lowerName = name.toLowerCase();
             const matchStart = lowerName.indexOf(query);
@@ -247,7 +205,6 @@ function renderArticulosList(filter = '') {
         item.addEventListener('click', () => selectArticulo(name));
         productoList.appendChild(item);
     });
-
     highlightedIdx = -1;
 }
 
@@ -258,21 +215,13 @@ function selectArticulo(name) {
     highlightedIdx = -1;
 }
 
-function openDropdown() {
+productoInput.addEventListener('focus', () => {
     renderArticulosList(productoInput.value);
     productoDropdown.classList.remove('hidden');
-}
-
-function closeDropdown() {
-    productoDropdown.classList.add('hidden');
-    highlightedIdx = -1;
-}
-
-// Input events
-productoInput.addEventListener('focus', openDropdown);
+});
 
 productoInput.addEventListener('input', () => {
-    productoValue.value = ''; // Clear selection when typing
+    productoValue.value = '';
     renderArticulosList(productoInput.value);
     productoDropdown.classList.remove('hidden');
 });
@@ -280,7 +229,6 @@ productoInput.addEventListener('input', () => {
 productoInput.addEventListener('keydown', (e) => {
     const items = productoList.querySelectorAll('.searchable-item');
     if (!items.length) return;
-
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         highlightedIdx = Math.min(highlightedIdx + 1, items.length - 1);
@@ -295,7 +243,7 @@ productoInput.addEventListener('keydown', (e) => {
             selectArticulo(items[highlightedIdx].dataset.value);
         }
     } else if (e.key === 'Escape') {
-        closeDropdown();
+        productoDropdown.classList.add('hidden');
     }
 });
 
@@ -306,218 +254,233 @@ function updateHighlight(items) {
     });
 }
 
-// Click outside to close
 document.addEventListener('click', (e) => {
     if (!e.target.closest('#productoCombobox')) {
-        closeDropdown();
+        productoDropdown.classList.add('hidden');
     }
 });
 
 // =============================================
-//  API
+//  Setup UI by Role
 // =============================================
 
-async function createTransfer(data) {
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/transferencias_v2`,
-        { method: 'POST', headers: HEADERS, body: JSON.stringify(data) }
-    );
-    if (!res.ok) throw new Error('Error al crear transferencia');
-    return res.json();
-}
+function setupRoleUI() {
+    if (isProduccion) {
+        // Producción → envía, campo = transferencia
+        roleSubtitle.textContent = 'Producción → Envío a locales';
+        pesoLabel.textContent = 'Peso de transferencia';
+        destinoGroup.style.display = 'block';
 
-async function updateTransfer(id, data) {
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/transferencias_v2?id=eq.${id}`,
-        { method: 'PATCH', headers: HEADERS, body: JSON.stringify(data) }
-    );
-    if (!res.ok) throw new Error('Error al actualizar transferencia');
-    return res.json();
-}
-
-// Load transfers pending for MY local (I need to receive)
-async function loadPendientes() {
-    try {
-        const myLocal = currentUser.nombre_local;
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(myLocal)}&estado=eq.pendiente&select=*&order=created_at.desc`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) throw new Error('Error');
-        const records = await res.json();
-        renderPendientes(records);
-
-        // Also check for transfers I SENT that are pending (show in badge)
-        const resSent = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2?local_origen=eq.${encodeURIComponent(myLocal)}&estado=eq.pendiente&select=id`,
-            { headers: HEADERS }
-        );
-
-        // Update badge with incoming pending
-        if (records.length > 0) {
-            pendingBadge.textContent = records.length;
-            pendingBadge.classList.remove('hidden');
-        } else {
-            pendingBadge.classList.add('hidden');
-        }
-    } catch (err) {
-        console.error('Error loading pendientes:', err);
+        // Populate destinos (all stores)
+        destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
+        LOCALES_TIENDA.forEach(local => {
+            const opt = document.createElement('option');
+            opt.value = local;
+            opt.textContent = `📍 ${local}`;
+            destinoSelect.appendChild(opt);
+        });
+    } else {
+        // Tienda → recibe, campo = recepcion
+        roleSubtitle.textContent = `Recepción → ${currentUser.nombre_local}`;
+        pesoLabel.textContent = 'Peso de recepción';
+        destinoGroup.style.display = 'none'; // auto-set to their local
     }
 }
 
-async function loadHistorial() {
+// =============================================
+//  API: Load Records (Today)
+// =============================================
+
+async function loadRecords() {
     try {
         const today = getTodayISO();
-        const myLocal = currentUser.nombre_local;
-        // Show all transfers involving my local today
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2?fecha=eq.${today}&or=(local_origen.eq.${encodeURIComponent(myLocal)},local_destino.eq.${encodeURIComponent(myLocal)})&select=*&order=created_at.desc`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) throw new Error('Error');
+        let url;
+
+        if (isProduccion) {
+            // Producción sees ALL today's transfers
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+        } else {
+            // Store sees only transfers to their local
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(currentUser.nombre_local)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+        }
+
+        const res = await fetch(url, { headers: HEADERS });
+        if (!res.ok) throw new Error('Error loading records');
         const records = await res.json();
-        renderHistorial(records);
-        historialCount.textContent = records.length;
+
+        renderRecords(records);
+        updateAlert(records);
+        recordCount.textContent = records.length;
     } catch (err) {
-        console.error('Error loading historial:', err);
+        console.error('Error loading records:', err);
     }
 }
 
 // =============================================
-//  Render Pending Transfers
+//  Alert Banner
 // =============================================
 
-function renderPendientes(records) {
-    pendientesList.innerHTML = '';
+function updateAlert(records) {
+    let pendingCount = 0;
+
+    if (isProduccion) {
+        // Records where transferencia is null (store created first, I need to add my weight)
+        pendingCount = records.filter(r => r.transferencia == null).length;
+    } else {
+        // Records where recepcion is null (production created first, I need to add my weight)
+        pendingCount = records.filter(r => r.recepcion == null).length;
+    }
+
+    if (pendingCount > 0) {
+        alertText.textContent = `${pendingCount} pendiente${pendingCount > 1 ? 's' : ''} de tu peso`;
+        alertBanner.classList.remove('hidden');
+    } else {
+        alertBanner.classList.add('hidden');
+    }
+}
+
+// =============================================
+//  Render Records
+// =============================================
+
+function renderRecords(records) {
+    recordsList.innerHTML = '';
+
     if (records.length === 0) {
-        pendientesList.style.display = 'none';
-        emptyPendientes.classList.add('visible');
+        recordsList.style.display = 'none';
+        emptyState.classList.add('visible');
         return;
     }
-    pendientesList.style.display = 'flex';
-    emptyPendientes.classList.remove('visible');
 
-    records.forEach((r, idx) => {
-        const card = createTransferCard(r, idx, true);
-        pendientesList.appendChild(card);
+    recordsList.style.display = 'flex';
+    emptyState.classList.remove('visible');
+
+    // Sort: items needing my weight first
+    const sorted = [...records].sort((a, b) => {
+        const aNeedsMine = isProduccion ? (a.transferencia == null) : (a.recepcion == null);
+        const bNeedsMine = isProduccion ? (b.transferencia == null) : (b.recepcion == null);
+        if (aNeedsMine && !bNeedsMine) return -1;
+        if (!aNeedsMine && bNeedsMine) return 1;
+        return 0;
+    });
+
+    sorted.forEach((r, idx) => {
+        const card = createRecordCard(r, idx);
+        recordsList.appendChild(card);
     });
 }
 
-// =============================================
-//  Render History
-// =============================================
-
-function renderHistorial(records) {
-    historialList.innerHTML = '';
-    if (records.length === 0) {
-        historialList.style.display = 'none';
-        emptyHistorial.classList.add('visible');
-        return;
-    }
-    historialList.style.display = 'flex';
-    emptyHistorial.classList.remove('visible');
-
-    records.forEach((r, idx) => {
-        const card = createTransferCard(r, idx, false);
-        historialList.appendChild(card);
-    });
-}
-
-// =============================================
-//  Create Transfer Card
-// =============================================
-
-function createTransferCard(r, idx, showReceiveBtn) {
+function createRecordCard(r, idx) {
     const card = document.createElement('div');
     card.className = 'transfer-card';
     card.style.animationDelay = `${idx * 0.05}s`;
 
+    // Determine if this card needs the current user's attention
+    const needsMine = isProduccion ? (r.transferencia == null) : (r.recepcion == null);
+
+    if (needsMine) card.classList.add('needs-attention');
+
     const estadoClass = r.estado === 'pendiente' ? 'estado-pendiente' : 'estado-completado';
     const estadoLabel = r.estado === 'pendiente' ? '⏳ Pendiente' : '✅ Completado';
 
-    const isMyLocal = r.local_destino === currentUser.nombre_local;
-    const canReceive = showReceiveBtn && r.estado === 'pendiente' && isMyLocal;
+    const transVal = r.transferencia != null ? `${formatNumber(r.transferencia)} g` : null;
+    const recepVal = r.recepcion != null ? `${formatNumber(r.recepcion)} g` : null;
 
     card.innerHTML = `
         <div class="transfer-card-header">
-            <span class="transfer-producto">🍦 ${r.producto}</span>
+            <span class="transfer-producto">📦 ${r.producto}</span>
             <span class="transfer-estado ${estadoClass}">${estadoLabel}</span>
         </div>
-        <div class="transfer-body">
-            <div class="transfer-local-box">
-                <div class="transfer-local-label">Origen</div>
-                <div class="transfer-local-name">${r.local_origen}</div>
-                <div class="transfer-peso">${r.peso_envio ? formatNumber(r.peso_envio) + ' g' : '—'}</div>
-                <div class="transfer-local-label" style="margin-top:2px;font-size:0.6rem;">👤 ${r.creado_por}</div>
+        <div class="transfer-weights">
+            <div class="weight-box">
+                <div class="weight-label">Transferencia (Envío)</div>
+                <div class="weight-value ${transVal ? 'weight-highlight' : 'weight-empty'}">
+                    ${transVal || 'Sin registrar'}
+                </div>
             </div>
-            <div class="transfer-arrow">→</div>
-            <div class="transfer-local-box">
-                <div class="transfer-local-label">Destino</div>
-                <div class="transfer-local-name">${r.local_destino}</div>
-                <div class="transfer-peso ${r.peso_recepcion ? '' : 'transfer-peso-empty'}">${r.peso_recepcion ? formatNumber(r.peso_recepcion) + ' g' : 'Sin confirmar'}</div>
-                <div class="transfer-local-label" style="margin-top:2px;font-size:0.6rem;">👤 ${r.recibido_por || '—'}</div>
+            <div class="weight-box">
+                <div class="weight-label">Recepción</div>
+                <div class="weight-value ${recepVal ? 'weight-highlight' : 'weight-empty'}">
+                    ${recepVal || 'Sin registrar'}
+                </div>
             </div>
         </div>
         <div class="transfer-footer">
             <div class="transfer-meta">
-                <span>🕐 ${formatTime(r.hora_envio)}</span>
-                ${r.notas ? `<span>📝 ${r.notas}</span>` : ''}
+                <span>📍 ${r.local_destino}</span>
+                <span>👤 ${r.creado_por}</span>
+                <span>🕐 ${formatDateTime(r.created_at)}</span>
             </div>
-            ${canReceive ? `<button class="btn-recibir" data-id="${r.id}">📥 Recibir</button>` : ''}
+            ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
         </div>
     `;
 
-    if (canReceive) {
-        card.querySelector('.btn-recibir').addEventListener('click', () => openReceiveModal(r));
+    if (needsMine) {
+        card.querySelector('.btn-add-weight').addEventListener('click', () => openAddWeightModal(r));
     }
 
     return card;
 }
 
 // =============================================
-//  Receive Modal
+//  Modal: Add Missing Weight
 // =============================================
 
-function openReceiveModal(transfer) {
-    selectedTransfer = transfer;
-    modalProducto.textContent = transfer.producto;
-    modalOrigen.textContent = transfer.local_origen;
-    modalEnviadoPor.textContent = transfer.creado_por;
-    modalPesoEnvio.textContent = `${formatNumber(transfer.peso_envio)} g`;
-    pesoRecepcion.value = '';
+function openAddWeightModal(record) {
+    selectedRecord = record;
+
+    modalProducto.textContent = record.producto;
+    modalDestino.textContent = record.local_destino;
+    modalCreadoPor.textContent = record.creado_por;
+
+    if (isProduccion) {
+        // I'm production, need to add transferencia. The store already put recepcion.
+        modalTitle.textContent = 'Agregar Peso de Transferencia';
+        modalPesoLabel.textContent = 'Peso de transferencia';
+        modalOtroPesoLabel.textContent = 'Peso recepción (tienda)';
+        modalOtroPeso.textContent = record.recepcion != null ? `${formatNumber(record.recepcion)} g` : '—';
+    } else {
+        // I'm store, need to add recepcion. Production already put transferencia.
+        modalTitle.textContent = 'Agregar Peso de Recepción';
+        modalPesoLabel.textContent = 'Peso de recepción';
+        modalOtroPesoLabel.textContent = 'Peso transferencia (producción)';
+        modalOtroPeso.textContent = record.transferencia != null ? `${formatNumber(record.transferencia)} g` : '—';
+    }
+
+    modalPesoInput.value = '';
     pesDiff.classList.add('hidden');
-    recibirModal.classList.remove('hidden');
-    pesoRecepcion.focus();
+    addWeightModal.classList.remove('hidden');
+    modalPesoInput.focus();
 }
 
-function closeReceiveModal() {
-    selectedTransfer = null;
-    recibirModal.classList.add('hidden');
-    pesoRecepcion.value = '';
+function closeAddWeightModal() {
+    selectedRecord = null;
+    addWeightModal.classList.add('hidden');
+    modalPesoInput.value = '';
     pesDiff.classList.add('hidden');
 }
 
-closeModal.addEventListener('click', closeReceiveModal);
-cancelRecibir.addEventListener('click', closeReceiveModal);
-
-// Close modal on overlay click
-recibirModal.addEventListener('click', (e) => {
-    if (e.target === recibirModal) closeReceiveModal();
+closeModal.addEventListener('click', closeAddWeightModal);
+cancelModal.addEventListener('click', closeAddWeightModal);
+addWeightModal.addEventListener('click', (e) => {
+    if (e.target === addWeightModal) closeAddWeightModal();
 });
 
-// Live diff calculation
-pesoRecepcion.addEventListener('input', () => {
-    if (!selectedTransfer) return;
-    const recibido = parseFloat(pesoRecepcion.value) || 0;
-    const enviado = selectedTransfer.peso_envio || 0;
+// Live diff
+modalPesoInput.addEventListener('input', () => {
+    if (!selectedRecord) return;
+    const myPeso = parseFloat(modalPesoInput.value) || 0;
+    const otherPeso = isProduccion
+        ? (selectedRecord.recepcion || 0)
+        : (selectedRecord.transferencia || 0);
 
-    if (recibido <= 0) {
+    if (myPeso <= 0 || otherPeso <= 0) {
         pesDiff.classList.add('hidden');
         return;
     }
 
-    const diff = recibido - enviado;
-    const percent = enviado > 0 ? ((diff / enviado) * 100).toFixed(1) : 0;
+    const diff = myPeso - otherPeso;
+    const percent = otherPeso > 0 ? ((diff / otherPeso) * 100).toFixed(1) : 0;
 
     if (Math.abs(diff) <= 10) {
         pesDiff.className = 'pes-diff pes-diff-ok';
@@ -529,98 +492,122 @@ pesoRecepcion.addEventListener('input', () => {
     pesDiff.classList.remove('hidden');
 });
 
-// Confirm receive
-confirmarRecibir.addEventListener('click', async () => {
-    if (!selectedTransfer) return;
-    const peso = parseFloat(pesoRecepcion.value);
-
-    if (!peso || peso <= 0) {
-        showToast('error', 'Peso inválido', 'Ingresa el peso recibido');
-        return;
-    }
-
-    confirmarRecibir.classList.add('loading');
-
-    try {
-        const now = new Date();
-        const horaRecepcion = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-        await updateTransfer(selectedTransfer.id, {
-            peso_recepcion: peso,
-            recibido_por: currentUser.usuario,
-            hora_recepcion: horaRecepcion,
-            estado: 'completado',
-            updated_at: now.toISOString()
-        });
-
-        showToast('success', '¡Recibido!', `${selectedTransfer.producto} confirmado`);
-        closeReceiveModal();
-        await loadPendientes();
-    } catch (err) {
-        console.error('Error receiving:', err);
-        showToast('error', 'Error', 'No se pudo confirmar la recepción');
-    } finally {
-        confirmarRecibir.classList.remove('loading');
-    }
-});
-
-// =============================================
-//  Send Form
-// =============================================
-
-enviarForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const producto = productoValue.value;
-    const destino = destinoSelect.value;
-    const peso = parseFloat(pesoEnvio.value);
-    const notas = notasEnvio.value.trim();
-
-    if (!producto || !destino) {
-        showToast('error', 'Campos requeridos', 'Selecciona producto y destino');
-        return;
-    }
+// Confirm
+confirmModal.addEventListener('click', async () => {
+    if (!selectedRecord) return;
+    const peso = parseFloat(modalPesoInput.value);
 
     if (!peso || peso <= 0) {
         showToast('error', 'Peso inválido', 'Ingresa un peso válido');
         return;
     }
 
-    enviarBtn.classList.add('loading');
+    confirmModal.classList.add('loading');
 
     try {
-        await createTransfer({
-            producto,
-            local_origen: currentUser.nombre_local,
-            local_destino: destino,
-            peso_envio: peso,
-            creado_por: currentUser.usuario,
-            estado: 'pendiente',
-            notas: notas || null
-        });
+        const updateData = {};
 
-        showToast('success', '¡Enviado!', `${producto} → ${destino}`);
-        enviarForm.reset();
-        productoValue.value = '';
+        if (isProduccion) {
+            updateData.transferencia = peso;
+        } else {
+            updateData.recepcion = peso;
+        }
+
+        // Check if both weights will be present → completado
+        const otherWeight = isProduccion ? selectedRecord.recepcion : selectedRecord.transferencia;
+        if (otherWeight != null) {
+            updateData.estado = 'completado';
+        }
+
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/transferencias_v2?id=eq.${selectedRecord.id}`,
+            { method: 'PATCH', headers: HEADERS, body: JSON.stringify(updateData) }
+        );
+        if (!res.ok) throw new Error('Error');
+
+        showToast('success', '¡Peso registrado!', `${selectedRecord.producto} actualizado`);
+        closeAddWeightModal();
+        await loadRecords();
     } catch (err) {
-        console.error('Send error:', err);
-        showToast('error', 'Error', 'No se pudo crear la transferencia');
+        console.error('Error:', err);
+        showToast('error', 'Error', 'No se pudo guardar el peso');
     } finally {
-        enviarBtn.classList.remove('loading');
+        confirmModal.classList.remove('loading');
     }
 });
 
-// Refresh buttons
-refreshPendientes.addEventListener('click', async () => {
-    refreshPendientes.classList.add('spinning');
-    await loadPendientes();
-    setTimeout(() => refreshPendientes.classList.remove('spinning'), 600);
+// =============================================
+//  New Record Form
+// =============================================
+
+nuevoForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const producto = productoValue.value;
+    if (!producto) {
+        showToast('error', 'Artículo requerido', 'Selecciona un artículo de la lista');
+        return;
+    }
+
+    const peso = parseFloat(pesoInput.value);
+    if (!peso || peso <= 0) {
+        showToast('error', 'Peso inválido', 'Ingresa un peso válido');
+        return;
+    }
+
+    let local_destino;
+    if (isProduccion) {
+        local_destino = destinoSelect.value;
+        if (!local_destino) {
+            showToast('error', 'Destino requerido', 'Selecciona el local de destino');
+            return;
+        }
+    } else {
+        local_destino = currentUser.nombre_local;
+    }
+
+    submitBtn.classList.add('loading');
+
+    try {
+        const record = {
+            producto,
+            local_destino,
+            creado_por: currentUser.usuario,
+            creado_por_rol: isProduccion ? 'produccion' : 'tienda',
+            estado: 'pendiente'
+        };
+
+        if (isProduccion) {
+            record.transferencia = peso;
+            // recepcion stays null
+        } else {
+            record.recepcion = peso;
+            // transferencia stays null
+        }
+
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/transferencias_v2`,
+            { method: 'POST', headers: HEADERS, body: JSON.stringify(record) }
+        );
+        if (!res.ok) throw new Error('Error al crear registro');
+
+        showToast('success', '¡Registrado!', `${producto} → ${local_destino}`);
+        nuevoForm.reset();
+        productoValue.value = '';
+        await loadRecords();
+    } catch (err) {
+        console.error('Error:', err);
+        showToast('error', 'Error', 'No se pudo crear el registro');
+    } finally {
+        submitBtn.classList.remove('loading');
+    }
 });
 
-refreshHistorial.addEventListener('click', async () => {
-    refreshHistorial.classList.add('spinning');
-    await loadHistorial();
-    setTimeout(() => refreshHistorial.classList.remove('spinning'), 600);
+// Refresh
+refreshBtn.addEventListener('click', async () => {
+    refreshBtn.classList.add('spinning');
+    await loadRecords();
+    setTimeout(() => refreshBtn.classList.remove('spinning'), 600);
 });
 
 // =============================================
@@ -635,16 +622,18 @@ async function init() {
     }
 
     currentUser = user;
+    isProduccion = user.nombre_local === 'Laboratorio';
+
     displayUserName.textContent = user.usuario;
     displayUserLocal.textContent = user.nombre_local;
-    autoLocalEnvio.textContent = user.nombre_local;
-    autoUserEnvio.textContent = user.usuario;
-    autoDateEnvio.textContent = getTodayDisplay();
+    autoUser.textContent = user.usuario;
+    autoLocal.textContent = user.nombre_local;
+    autoDate.textContent = getTodayDisplay();
 
-    populateDestinos();
+    setupRoleUI();
     await loadArticulos();
-    switchScreen('transferenciasScreen');
-    await loadPendientes();
+    switchScreen('mainScreen');
+    await loadRecords();
 }
 
 init();

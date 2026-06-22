@@ -29,13 +29,9 @@
     scrollbar-color: rgba(120, 100, 200, 0.15) transparent;
 }
 
-.searchable-dropdown.hidden {
-    display: none;
-}
+.searchable-dropdown.hidden { display: none; }
 
-.searchable-list {
-    padding: 4px;
-}
+.searchable-list { padding: 4px; }
 
 .searchable-item {
     padding: 9px 12px;
@@ -98,7 +94,7 @@
     transform: translateX(-2px);
 }
 
-/* --- Transfer accent (purple / indigo) --- */
+/* --- Transfer accent --- */
 .badge-transfer {
     color: #a78bfa !important;
     background: rgba(167, 139, 250, 0.1) !important;
@@ -125,82 +121,29 @@
     box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
 }
 
-/* --- Tab Bar --- */
-.tab-bar {
-    display: flex;
-    gap: 4px;
-    background: rgba(18, 18, 28, 0.5);
-    border: 1px solid rgba(120, 100, 200, 0.08);
-    border-radius: var(--radius-md);
-    padding: 4px;
-    margin-bottom: 16px;
-    animation: fadeInUp 0.4s ease-out both;
-}
-
-.tab-btn {
-    flex: 1;
+/* --- Alert Banner --- */
+.alert-banner {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 12px;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-family: var(--font-main);
-    font-size: 0.82rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    position: relative;
-}
-
-.tab-btn:hover {
-    color: var(--text-secondary);
-    background: rgba(120, 100, 200, 0.06);
-}
-
-.tab-btn.active {
-    background: rgba(167, 139, 250, 0.12);
-    color: #a78bfa;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    animation: fadeInUp 0.4s ease-out both, pulse-glow 2s ease-in-out infinite;
+    color: #fbbf24;
+    font-size: 0.88rem;
     font-weight: 600;
 }
 
-.tab-icon {
-    font-size: 0.95rem;
-}
+.alert-banner.hidden { display: none; }
 
-.tab-badge {
-    min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ef4444;
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    border-radius: 100px;
-    padding: 0 5px;
-    animation: pulse 2s infinite;
-}
+.alert-icon { font-size: 1.1rem; }
 
-.tab-badge.hidden { display: none; }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-/* --- Tab Content --- */
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-    animation: fadeInUp 0.3s ease-out both;
+@keyframes pulse-glow {
+    0%, 100% { border-color: rgba(251, 191, 36, 0.2); }
+    50% { border-color: rgba(251, 191, 36, 0.45); }
 }
 
 /* --- Form auto info --- */
@@ -239,6 +182,16 @@
     background: rgba(120, 100, 200, 0.06);
 }
 
+.transfer-card.needs-attention {
+    border-color: rgba(251, 191, 36, 0.25);
+    background: rgba(251, 191, 36, 0.04);
+}
+
+.transfer-card.needs-attention:hover {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.06);
+}
+
 .transfer-card-header {
     display: flex;
     align-items: center;
@@ -265,60 +218,53 @@
     border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-.estado-recibido,
 .estado-completado {
     color: var(--accent-green);
     background: rgba(52, 211, 153, 0.1);
     border: 1px solid rgba(52, 211, 153, 0.2);
 }
 
-.transfer-body {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* Weight columns */
+.transfer-weights {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     margin-bottom: 10px;
 }
 
-.transfer-local-box {
-    flex: 1;
+.weight-box {
     text-align: center;
-    padding: 8px;
+    padding: 10px 8px;
     background: rgba(18, 18, 28, 0.4);
     border-radius: var(--radius-sm);
+    position: relative;
 }
 
-.transfer-local-label {
+.weight-label {
     font-size: 0.62rem;
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
-.transfer-local-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.transfer-peso {
-    font-size: 0.75rem;
+.weight-value {
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-variant-numeric: tabular-nums;
-    margin-top: 2px;
 }
 
-.transfer-peso-empty {
+.weight-value.weight-empty {
     color: var(--text-muted);
     opacity: 0.5;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
-.transfer-arrow {
+.weight-value.weight-highlight {
     color: #a78bfa;
-    font-size: 1.2rem;
-    flex-shrink: 0;
 }
 
 .transfer-footer {
@@ -336,23 +282,24 @@
     gap: 10px;
 }
 
-/* Receive button */
-.btn-recibir {
+/* Add weight button */
+.btn-add-weight {
     padding: 6px 14px;
-    background: rgba(52, 211, 153, 0.1);
-    border: 1px solid rgba(52, 211, 153, 0.2);
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.25);
     border-radius: var(--radius-sm);
-    color: var(--accent-green);
+    color: #fbbf24;
     font-family: var(--font-main);
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition-fast);
+    animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.btn-recibir:hover {
-    background: rgba(52, 211, 153, 0.2);
-    border-color: rgba(52, 211, 153, 0.35);
+.btn-add-weight:hover {
+    background: rgba(251, 191, 36, 0.2);
+    border-color: rgba(251, 191, 36, 0.4);
 }
 
 /* --- Modal --- */
@@ -449,7 +396,6 @@
     border-top: 1px solid rgba(120, 100, 200, 0.08);
 }
 
-/* Peso diff */
 .pes-diff {
     margin-top: 10px;
     padding: 8px 12px;
@@ -473,7 +419,6 @@
     color: #fbbf24;
 }
 
-/* Cancel button */
 .btn-cancel-edit {
     padding: 10px 18px;
     background: rgba(120, 100, 200, 0.08);
@@ -494,27 +439,9 @@
 
 /* --- Responsive --- */
 @media (max-width: 640px) {
-    .modal-info-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .header-right .user-info {
-        display: none;
-    }
-
-    .tab-btn {
-        font-size: 0.75rem;
-        padding: 8px 6px;
-    }
-
-    .transfer-body {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .transfer-arrow {
-        transform: rotate(90deg);
-    }
+    .modal-info-grid { grid-template-columns: 1fr; }
+    .header-right .user-info { display: none; }
+    .transfer-weights { grid-template-columns: 1fr 1fr; gap: 6px; }
 }
 
 @keyframes fadeIn {
