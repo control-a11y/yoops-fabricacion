@@ -283,7 +283,8 @@ function setupRoleUI() {
         // Tienda → recibe, campo = recepcion
         roleSubtitle.textContent = `Recepción → ${currentUser.nombre_local}`;
         pesoLabel.textContent = 'Peso de recepción';
-        destinoGroup.style.display = 'none'; // auto-set to their local
+        destinoGroup.style.display = 'none';
+        destinoSelect.removeAttribute('required');
     }
 }
 
