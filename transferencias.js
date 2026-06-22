@@ -1,6 +1,5 @@
 /* ============================================
-   YOOPS - Transferencias (Solo Laboratorio)
-   Application Logic
+   YOOPS - Transferencias (Bidireccional + Auditoría)
    ============================================ */
 
 const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
@@ -16,7 +15,9 @@ const HEADERS = {
 const LOCALES_TIENDA = ['Plaza Numa', 'Grand Plaza', 'Rio de Piedras'];
 
 let currentUser = null;
+let isLab = false;       // true = Laboratorio (producción)
 let allArticulos = [];
+let selectedRecord = null;
 let highlightedIdx = -1;
 
 // =============================================
@@ -24,10 +25,15 @@ let highlightedIdx = -1;
 // =============================================
 
 const notLoggedScreen = document.getElementById('notLoggedScreen');
-const noAccessScreen = document.getElementById('noAccessScreen');
 const mainScreen = document.getElementById('mainScreen');
+const roleSubtitle = document.getElementById('roleSubtitle');
+const roleBadge = document.getElementById('roleBadge');
 const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
+
+// Alert
+const alertBanner = document.getElementById('alertBanner');
+const alertText = document.getElementById('alertText');
 
 // Form
 const nuevoForm = document.getElementById('nuevoForm');
@@ -35,11 +41,12 @@ const productoInput = document.getElementById('productoInput');
 const productoValue = document.getElementById('productoValue');
 const productoDropdown = document.getElementById('productoDropdown');
 const productoList = document.getElementById('productoList');
+const destinoGroup = document.getElementById('destinoGroup');
 const destinoSelect = document.getElementById('destinoSelect');
 const pesoInput = document.getElementById('pesoInput');
+const pesoLabel = document.getElementById('pesoLabel');
 const submitBtn = document.getElementById('submitBtn');
 
-// Auto info
 const autoUser = document.getElementById('autoUser');
 const autoLocal = document.getElementById('autoLocal');
 const autoDate = document.getElementById('autoDate');
@@ -49,6 +56,18 @@ const recordsList = document.getElementById('recordsList');
 const emptyState = document.getElementById('emptyState');
 const recordCount = document.getElementById('recordCount');
 const refreshBtn = document.getElementById('refreshBtn');
+
+// Modal
+const addWeightModal = document.getElementById('addWeightModal');
+const closeModal = document.getElementById('closeModal');
+const cancelModal = document.getElementById('cancelModal');
+const confirmModal = document.getElementById('confirmModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalProducto = document.getElementById('modalProducto');
+const modalDestino = document.getElementById('modalDestino');
+const modalCreadoPor = document.getElementById('modalCreadoPor');
+const modalPesoInput = document.getElementById('modalPesoInput');
+const modalPesoLabel = document.getElementById('modalPesoLabel');
 
 // Toast
 const toast = document.getElementById('toast');
@@ -86,12 +105,11 @@ function getTodayDisplay() {
 
 function formatDateTime(ts) {
     if (!ts) return '—';
-    const d = new Date(ts);
-    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return new Date(ts).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
 function switchScreen(id) {
-    [notLoggedScreen, noAccessScreen, mainScreen].forEach(s => s.classList.add('hidden'));
+    [notLoggedScreen, mainScreen].forEach(s => s.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
 }
 
@@ -117,7 +135,6 @@ async function verifySession() {
         const users = await res.json();
         return users.length > 0 ? users[0] : null;
     } catch (e) {
-        console.error('Session error:', e);
         return null;
     }
 }
@@ -132,11 +149,10 @@ async function loadArticulos() {
             `${SUPABASE_URL}/rest/v1/articulos?select="ARTICULO"&order="ARTICULO".asc`,
             { headers: HEADERS }
         );
-        if (!res.ok) throw new Error('Error loading articulos');
+        if (!res.ok) throw new Error('fail');
         const data = await res.json();
         allArticulos = data.map(a => a.ARTICULO).filter(Boolean);
     } catch (err) {
-        console.error('Error loading articulos:', err);
         allArticulos = [];
     }
 }
@@ -238,36 +254,81 @@ document.addEventListener('click', (e) => {
 });
 
 // =============================================
-//  Populate Destinos
+//  Setup UI by Role
 // =============================================
 
-function populateDestinos() {
-    destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
-    LOCALES_TIENDA.forEach(local => {
-        const opt = document.createElement('option');
-        opt.value = local;
-        opt.textContent = `📍 ${local}`;
-        destinoSelect.appendChild(opt);
-    });
+function setupRoleUI() {
+    if (isLab) {
+        roleSubtitle.textContent = 'Producción → Envío a locales';
+        roleBadge.textContent = '📤 ENVÍO';
+        roleBadge.className = 'role-badge role-badge-lab';
+        pesoLabel.textContent = 'Peso de transferencia';
+
+        destinoGroup.style.display = 'block';
+        destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
+        LOCALES_TIENDA.forEach(local => {
+            const opt = document.createElement('option');
+            opt.value = local;
+            opt.textContent = `📍 ${local}`;
+            destinoSelect.appendChild(opt);
+        });
+    } else {
+        roleSubtitle.textContent = `Recepción → ${currentUser.nombre_local}`;
+        roleBadge.textContent = '📥 RECEPCIÓN';
+        roleBadge.className = 'role-badge role-badge-store';
+        pesoLabel.textContent = 'Peso recibido';
+        destinoGroup.style.display = 'none';
+    }
 }
 
 // =============================================
-//  Load Records (Today)
+//  Load Records
 // =============================================
 
 async function loadRecords() {
     try {
         const today = getTodayISO();
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) throw new Error('Error loading records');
+        let url;
+
+        if (isLab) {
+            // Lab sees ALL transfers of today
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+        } else {
+            // Store sees only transfers TO their local
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(currentUser.nombre_local)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+        }
+
+        const res = await fetch(url, { headers: HEADERS });
+        if (!res.ok) throw new Error('fail');
         const records = await res.json();
+
         renderRecords(records);
+        updateAlert(records);
         recordCount.textContent = records.length;
     } catch (err) {
         console.error('Error loading records:', err);
+    }
+}
+
+// =============================================
+//  Alert Banner
+// =============================================
+
+function updateAlert(records) {
+    let pendingCount;
+    if (isLab) {
+        // Lab: records where transferencia is null (store registered first)
+        pendingCount = records.filter(r => r.transferencia == null).length;
+    } else {
+        // Store: records where recepcion is null (lab sent, store hasn't confirmed)
+        pendingCount = records.filter(r => r.recepcion == null).length;
+    }
+
+    if (pendingCount > 0) {
+        alertText.textContent = `⚡ ${pendingCount} pendiente${pendingCount > 1 ? 's' : ''} de tu registro`;
+        alertBanner.classList.remove('hidden');
+    } else {
+        alertBanner.classList.add('hidden');
     }
 }
 
@@ -287,10 +348,16 @@ function renderRecords(records) {
     recordsList.style.display = 'flex';
     emptyState.classList.remove('visible');
 
-    records.forEach((r, idx) => {
-        const card = createRecordCard(r, idx);
-        recordsList.appendChild(card);
+    // Sort: needs-my-weight first
+    const sorted = [...records].sort((a, b) => {
+        const aNeedsMine = isLab ? (a.transferencia == null) : (a.recepcion == null);
+        const bNeedsMine = isLab ? (b.transferencia == null) : (b.recepcion == null);
+        if (aNeedsMine && !bNeedsMine) return -1;
+        if (!aNeedsMine && bNeedsMine) return 1;
+        return 0;
     });
+
+    sorted.forEach((r, idx) => recordsList.appendChild(createRecordCard(r, idx)));
 }
 
 function createRecordCard(r, idx) {
@@ -298,11 +365,61 @@ function createRecordCard(r, idx) {
     card.className = 'transfer-card';
     card.style.animationDelay = `${idx * 0.05}s`;
 
-    const estadoClass = r.estado === 'pendiente' ? 'estado-pendiente' : 'estado-completado';
-    const estadoLabel = r.estado === 'pendiente' ? '⏳ Pendiente' : '✅ Completado';
+    const needsMine = isLab ? (r.transferencia == null) : (r.recepcion == null);
+    if (needsMine) card.classList.add('needs-attention');
 
-    const transVal = r.transferencia != null ? `${formatNumber(r.transferencia)} g` : null;
-    const recepVal = r.recepcion != null ? `${formatNumber(r.recepcion)} g` : null;
+    const estadoClass = r.estado === 'completado' ? 'estado-completado' : 'estado-pendiente';
+    const estadoLabel = r.estado === 'completado' ? '✅ Completado' : '⏳ Pendiente';
+
+    // === VISIBILITY RULES ===
+    // Each side ONLY sees their own weight.
+    // The other side's weight shows "✓ Registrado" (exists) or "Pendiente" (null).
+    // This prevents parties from coordinating values.
+
+    let col1Label, col1Value, col1Class;
+    let col2Label, col2Value, col2Class;
+
+    if (isLab) {
+        // LAB column 1: Transferencia (MY weight — visible)
+        col1Label = 'Transferencia (Envío)';
+        if (r.transferencia != null) {
+            col1Value = `${formatNumber(r.transferencia)} g`;
+            col1Class = 'weight-highlight';
+        } else {
+            col1Value = 'Sin registrar';
+            col1Class = 'weight-empty';
+        }
+
+        // LAB column 2: Recepción (THEIR weight — hidden value)
+        col2Label = 'Recepción (Tienda)';
+        if (r.recepcion != null) {
+            col2Value = '✓ Registrado';
+            col2Class = 'weight-confirmed';
+        } else {
+            col2Value = 'Pendiente';
+            col2Class = 'weight-empty';
+        }
+    } else {
+        // STORE column 1: Transferencia (THEIR weight — hidden value)
+        col1Label = 'Transferencia (Lab)';
+        if (r.transferencia != null) {
+            col1Value = '✓ Registrado';
+            col1Class = 'weight-confirmed';
+        } else {
+            col1Value = 'Pendiente';
+            col1Class = 'weight-empty';
+        }
+
+        // STORE column 2: Recepción (MY weight — visible)
+        col2Label = 'Recepción (Mi peso)';
+        if (r.recepcion != null) {
+            col2Value = `${formatNumber(r.recepcion)} g`;
+            col2Class = 'weight-highlight';
+        } else {
+            col2Value = 'Sin registrar';
+            col2Class = 'weight-empty';
+        }
+    }
 
     card.innerHTML = `
         <div class="transfer-card-header">
@@ -311,16 +428,12 @@ function createRecordCard(r, idx) {
         </div>
         <div class="transfer-weights">
             <div class="weight-box">
-                <div class="weight-label">Transferencia</div>
-                <div class="weight-value ${transVal ? 'weight-highlight' : 'weight-empty'}">
-                    ${transVal || 'Sin registrar'}
-                </div>
+                <div class="weight-label">${col1Label}</div>
+                <div class="weight-value ${col1Class}">${col1Value}</div>
             </div>
             <div class="weight-box">
-                <div class="weight-label">Recepción</div>
-                <div class="weight-value ${recepVal ? 'weight-highlight' : 'weight-empty'}">
-                    ${recepVal || 'Sin confirmar'}
-                </div>
+                <div class="weight-label">${col2Label}</div>
+                <div class="weight-value ${col2Class}">${col2Value}</div>
             </div>
         </div>
         <div class="transfer-footer">
@@ -329,11 +442,93 @@ function createRecordCard(r, idx) {
                 <span>👤 ${r.creado_por}</span>
                 <span>🕐 ${formatDateTime(r.created_at)}</span>
             </div>
+            ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
         </div>
     `;
 
+    if (needsMine) {
+        card.querySelector('.btn-add-weight').addEventListener('click', () => openModal(r));
+    }
+
     return card;
 }
+
+// =============================================
+//  Modal: Add Missing Weight
+// =============================================
+
+function openModal(record) {
+    selectedRecord = record;
+    modalProducto.textContent = record.producto;
+    modalDestino.textContent = record.local_destino;
+    modalCreadoPor.textContent = record.creado_por;
+
+    if (isLab) {
+        modalTitle.textContent = 'Registrar Peso de Transferencia';
+        modalPesoLabel.textContent = 'Peso que se envió';
+    } else {
+        modalTitle.textContent = 'Registrar Peso de Recepción';
+        modalPesoLabel.textContent = 'Peso que recibiste';
+    }
+
+    modalPesoInput.value = '';
+    addWeightModal.classList.remove('hidden');
+    modalPesoInput.focus();
+}
+
+function closeModalFn() {
+    selectedRecord = null;
+    addWeightModal.classList.add('hidden');
+    modalPesoInput.value = '';
+}
+
+closeModal.addEventListener('click', closeModalFn);
+cancelModal.addEventListener('click', closeModalFn);
+addWeightModal.addEventListener('click', (e) => {
+    if (e.target === addWeightModal) closeModalFn();
+});
+
+confirmModal.addEventListener('click', async () => {
+    if (!selectedRecord) return;
+    const peso = parseFloat(modalPesoInput.value);
+
+    if (!peso || peso <= 0) {
+        showToast('error', 'Peso inválido', 'Ingresa un peso válido');
+        return;
+    }
+
+    confirmModal.classList.add('loading');
+
+    try {
+        const updateData = {};
+
+        if (isLab) {
+            updateData.transferencia = peso;
+        } else {
+            updateData.recepcion = peso;
+        }
+
+        // If the other side already registered → completado
+        const otherWeight = isLab ? selectedRecord.recepcion : selectedRecord.transferencia;
+        if (otherWeight != null) {
+            updateData.estado = 'completado';
+        }
+
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/transferencias_v2?id=eq.${selectedRecord.id}`,
+            { method: 'PATCH', headers: HEADERS, body: JSON.stringify(updateData) }
+        );
+        if (!res.ok) throw new Error('fail');
+
+        showToast('success', '¡Peso registrado!', `${selectedRecord.producto} actualizado`);
+        closeModalFn();
+        await loadRecords();
+    } catch (err) {
+        showToast('error', 'Error', 'No se pudo guardar');
+    } finally {
+        confirmModal.classList.remove('loading');
+    }
+});
 
 // =============================================
 //  New Record Form
@@ -348,16 +543,21 @@ nuevoForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const destino = destinoSelect.value;
-    if (!destino) {
-        showToast('error', 'Destino requerido', 'Selecciona el local de destino');
-        return;
-    }
-
     const peso = parseFloat(pesoInput.value);
     if (!peso || peso <= 0) {
         showToast('error', 'Peso inválido', 'Ingresa un peso válido');
         return;
+    }
+
+    let local_destino;
+    if (isLab) {
+        local_destino = destinoSelect.value;
+        if (!local_destino) {
+            showToast('error', 'Destino requerido', 'Selecciona el local de destino');
+            return;
+        }
+    } else {
+        local_destino = currentUser.nombre_local;
     }
 
     submitBtn.classList.add('loading');
@@ -365,25 +565,31 @@ nuevoForm.addEventListener('submit', async (e) => {
     try {
         const record = {
             producto,
-            local_destino: destino,
-            transferencia: peso,
+            local_destino,
             creado_por: currentUser.usuario,
-            creado_por_rol: 'produccion',
+            creado_por_rol: isLab ? 'produccion' : 'tienda',
             estado: 'pendiente'
         };
+
+        if (isLab) {
+            record.transferencia = peso;
+            // recepcion = null → store must confirm
+        } else {
+            record.recepcion = peso;
+            // transferencia = null → lab must register what they sent
+        }
 
         const res = await fetch(
             `${SUPABASE_URL}/rest/v1/transferencias_v2`,
             { method: 'POST', headers: HEADERS, body: JSON.stringify(record) }
         );
-        if (!res.ok) throw new Error('Error al crear registro');
+        if (!res.ok) throw new Error('fail');
 
-        showToast('success', '¡Registrado!', `${producto} → ${destino}`);
+        showToast('success', '¡Registrado!', `${producto} → ${local_destino}`);
         nuevoForm.reset();
         productoValue.value = '';
         await loadRecords();
     } catch (err) {
-        console.error('Error:', err);
         showToast('error', 'Error', 'No se pudo crear el registro');
     } finally {
         submitBtn.classList.remove('loading');
@@ -408,20 +614,16 @@ async function init() {
         return;
     }
 
-    // Solo Laboratorio tiene acceso
-    if (user.nombre_local !== 'Laboratorio') {
-        switchScreen('noAccessScreen');
-        return;
-    }
-
     currentUser = user;
+    isLab = user.nombre_local === 'Laboratorio';
+
     displayUserName.textContent = user.usuario;
     displayUserLocal.textContent = user.nombre_local;
     autoUser.textContent = user.usuario;
     autoLocal.textContent = user.nombre_local;
     autoDate.textContent = getTodayDisplay();
 
-    populateDestinos();
+    setupRoleUI();
     await loadArticulos();
     switchScreen('mainScreen');
     await loadRecords();

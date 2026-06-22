@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yoops - Transferencias</title>
-    <meta name="description" content="Sistema de transferencias de producto entre locales Yoops.">
+    <meta name="description" content="Sistema de transferencias de inventario entre locales Yoops.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -34,20 +34,6 @@
             </div>
         </div>
 
-        <!-- NO ACCESS (not Laboratorio) -->
-        <div class="screen hidden" id="noAccessScreen">
-            <div class="login-card card" style="text-align:center;">
-                <div class="login-logo">
-                    <div class="logo-icon-lg" style="font-size:2.5rem;">🔒</div>
-                    <h1 class="login-title">Sin Acceso</h1>
-                    <p class="login-subtitle" style="margin-top:8px;">Esta vista es exclusiva para el Laboratorio.</p>
-                </div>
-                <a href="index.html" class="btn-submit" style="text-decoration:none;margin-top:16px;">
-                    <span class="btn-text">← Volver al Inicio</span>
-                </a>
-            </div>
-        </div>
-
         <!-- MAIN SCREEN -->
         <div class="screen hidden" id="mainScreen">
             <!-- Header -->
@@ -58,7 +44,7 @@
                     </a>
                     <div>
                         <h1 class="app-title">Transferencias</h1>
-                        <p class="app-subtitle">Producción → Envío a locales</p>
+                        <p class="app-subtitle" id="roleSubtitle">Inventario entre locales</p>
                     </div>
                 </div>
                 <div class="header-right">
@@ -69,6 +55,11 @@
                 </div>
             </header>
 
+            <!-- Alert Banner -->
+            <div class="alert-banner hidden" id="alertBanner">
+                <span class="alert-icon">⚡</span>
+                <span class="alert-text" id="alertText">0 pendientes de tu registro</span>
+            </div>
 
             <!-- New Record Form -->
             <div class="card form-card">
@@ -77,6 +68,7 @@
                         <span class="card-icon">📝</span>
                         Nuevo Registro
                     </h2>
+                    <span class="role-badge" id="roleBadge">—</span>
                 </div>
                 <form id="nuevoForm">
                     <div class="form-group">
@@ -95,7 +87,7 @@
                         </div>
                     </div>
 
-                    <!-- Destination (only for Laboratorio/Production) -->
+                    <!-- Destination (only for Laboratorio) -->
                     <div class="form-group" id="destinoGroup">
                         <label for="destinoSelect" class="form-label">
                             <span class="label-icon">📍</span> Enviar a
@@ -112,10 +104,10 @@
 
                     <div class="form-group">
                         <label for="pesoInput" class="form-label">
-                            <span class="label-icon">⚖️</span> <span id="pesoLabel">Peso</span>
+                            <span class="label-icon">⚖️</span> <span id="pesoLabel">Peso / Cantidad</span>
                         </label>
                         <div class="input-wrapper">
-                            <input type="number" id="pesoInput" placeholder="0" min="0" step="1">
+                            <input type="number" id="pesoInput" placeholder="0" min="0" step="0.01">
                             <span class="input-suffix">g</span>
                         </div>
                     </div>
@@ -135,7 +127,7 @@
                 </form>
             </div>
 
-            <!-- Records Table -->
+            <!-- Records -->
             <div class="card records-card">
                 <div class="card-header">
                     <h2 class="card-title">
@@ -161,7 +153,50 @@
             </div>
         </div>
 
-
+        <!-- Modal: Add missing weight -->
+        <div class="modal-overlay hidden" id="addWeightModal">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">⚖️</span>
+                        <span id="modalTitle">Agregar Peso</span>
+                    </h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Artículo</span>
+                            <span class="modal-info-value" id="modalProducto">—</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Destino</span>
+                            <span class="modal-info-value" id="modalDestino">—</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Registrado por</span>
+                            <span class="modal-info-value" id="modalCreadoPor">—</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px;">
+                        <label for="modalPesoInput" class="form-label">
+                            <span class="label-icon">⚖️</span> <span id="modalPesoLabel">Tu peso</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="modalPesoInput" placeholder="0" min="0" step="0.01">
+                            <span class="input-suffix">g</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel-edit" id="cancelModal">Cancelar</button>
+                    <button type="button" class="btn-submit btn-transfer" id="confirmModal">
+                        <span class="btn-text">Guardar</span>
+                        <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Toast -->
         <div class="toast" id="toast">

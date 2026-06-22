@@ -437,6 +437,36 @@
     color: var(--text-primary);
 }
 
+/* --- Role Badge --- */
+.role-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.role-badge-lab {
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    color: #a78bfa;
+}
+
+.role-badge-store {
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    color: var(--accent-green);
+}
+
+/* --- Weight confirmed (other party) --- */
+.weight-value.weight-confirmed {
+    color: var(--accent-green);
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
 /* --- Responsive --- */
 @media (max-width: 640px) {
     .modal-info-grid { grid-template-columns: 1fr; }
