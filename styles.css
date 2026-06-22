@@ -476,6 +476,19 @@ body {
     box-shadow: 0 4px 16px rgba(34, 211, 238, 0.1);
 }
 
+.nav-link-purple {
+    background: rgba(167, 139, 250, 0.06);
+    border: 1px solid rgba(167, 139, 250, 0.12);
+    color: #a78bfa;
+}
+
+.nav-link-purple:hover {
+    background: rgba(167, 139, 250, 0.12);
+    border-color: rgba(167, 139, 250, 0.25);
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(167, 139, 250, 0.1);
+}
+
 .general-nav-link svg {
     margin-left: auto;
     opacity: 0.5;

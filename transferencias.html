@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoops - Transferencias</title>
+    <meta name="description" content="Sistema de transferencias de producto entre locales Yoops.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="transferencias.css">
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- NOT LOGGED -->
+        <div class="screen hidden" id="notLoggedScreen">
+            <div class="login-card card" style="text-align:center;">
+                <div class="login-logo">
+                    <div class="logo-icon-lg" style="font-size:2.5rem;">👤</div>
+                    <h1 class="login-title">Inicia Sesión</h1>
+                    <p class="login-subtitle" style="margin-top:8px;">Necesitas iniciar sesión para acceder.</p>
+                </div>
+                <a href="index.html" class="btn-submit" style="text-decoration:none;margin-top:16px;">
+                    <span class="btn-text">← Ir a Login</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN TRANSFERENCIAS SCREEN -->
+        <div class="screen hidden" id="transferenciasScreen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="logo-section">
+                    <a href="index.html" class="btn-back" title="Volver">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </a>
+                    <div>
+                        <h1 class="app-title">Transferencias</h1>
+                        <p class="app-subtitle">Envío y recepción entre locales</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-name" id="displayUserName"></span>
+                        <span class="user-local" id="displayUserLocal"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab Switcher -->
+            <div class="tab-bar">
+                <button class="tab-btn active" data-tab="enviar">
+                    <span class="tab-icon">📤</span> Enviar
+                </button>
+                <button class="tab-btn" data-tab="recibir">
+                    <span class="tab-icon">📥</span> Pendientes
+                    <span class="tab-badge hidden" id="pendingBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="historial">
+                    <span class="tab-icon">📋</span> Historial
+                </button>
+            </div>
+
+            <!-- TAB: Enviar -->
+            <section class="tab-content active" id="tab-enviar">
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">📤</span>
+                            Nueva Transferencia
+                        </h2>
+                        <span class="card-badge badge-transfer">Envío</span>
+                    </div>
+                    <form id="enviarForm">
+                        <div class="form-group">
+                            <label for="productoSelect" class="form-label">
+                                <span class="label-icon">🍦</span> Producto
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="productoSelect" required>
+                                    <option value="" disabled selected>Selecciona producto...</option>
+                                    <option value="Natural">🥛 Natural</option>
+                                    <option value="Taro">🟣 Taro</option>
+                                    <option value="Carbon">⚫ Carbón</option>
+                                    <option value="Vegano">🌱 Vegano</option>
+                                    <option value="Acai">🫐 Açaí</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="destinoSelect" class="form-label">
+                                <span class="label-icon">📍</span> Enviar a
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="destinoSelect" required>
+                                    <option value="" disabled selected>Selecciona destino...</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pesoEnvio" class="form-label">
+                                <span class="label-icon">⚖️</span> Peso de envío
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="number" id="pesoEnvio" placeholder="0" min="0" step="1" required>
+                                <span class="input-suffix">g</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notasEnvio" class="form-label">
+                                <span class="label-icon">📝</span> Notas (opcional)
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="notasEnvio" placeholder="Observaciones...">
+                            </div>
+                        </div>
+
+                        <div class="form-auto-info">
+                            <div class="auto-chip"><span>📍</span><span id="autoLocalEnvio">—</span></div>
+                            <div class="auto-chip"><span>👤</span><span id="autoUserEnvio">—</span></div>
+                            <div class="auto-chip"><span>📅</span><span id="autoDateEnvio">—</span></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit btn-transfer" id="enviarBtn">
+                                <span class="btn-text">Enviar Transferencia</span>
+                                <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                                <span class="btn-icon">→</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB: Pendientes (Recibir) -->
+            <section class="tab-content" id="tab-recibir">
+                <div class="card records-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">📥</span>
+                            Transferencias Pendientes
+                        </h2>
+                        <button class="btn-refresh" id="refreshPendientes" title="Actualizar">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                    <div id="pendientesList" class="records-list"></div>
+                    <div class="empty-state" id="emptyPendientes">
+                        <div class="empty-icon">✅</div>
+                        <p class="empty-text">Sin transferencias pendientes</p>
+                        <p class="empty-sub">No hay envíos por recibir</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Historial -->
+            <section class="tab-content" id="tab-historial">
+                <div class="card records-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">📋</span>
+                            Historial de Hoy
+                        </h2>
+                        <div class="card-header-actions">
+                            <div class="stat-chip stat-chip-purple">
+                                <span class="stat-dot stat-dot-purple"></span>
+                                <span id="historialCount">0</span> registros
+                            </div>
+                            <button class="btn-refresh" id="refreshHistorial" title="Actualizar">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="historialList" class="records-list"></div>
+                    <div class="empty-state" id="emptyHistorial">
+                        <div class="empty-icon">📋</div>
+                        <p class="empty-text">Sin transferencias hoy</p>
+                        <p class="empty-sub">Envía o recibe producto para ver el historial</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Modal: Recibir transferencia -->
+        <div class="modal-overlay hidden" id="recibirModal">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📥</span>
+                        Confirmar Recepción
+                    </h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Producto</span>
+                            <span class="modal-info-value" id="modalProducto">—</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Desde</span>
+                            <span class="modal-info-value" id="modalOrigen">—</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Enviado por</span>
+                            <span class="modal-info-value" id="modalEnviadoPor">—</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Peso declarado</span>
+                            <span class="modal-info-value modal-peso-envio" id="modalPesoEnvio">—</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px;">
+                        <label for="pesoRecepcion" class="form-label">
+                            <span class="label-icon">⚖️</span> Peso recibido (tu báscula)
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="pesoRecepcion" placeholder="0" min="0" step="1" required>
+                            <span class="input-suffix">g</span>
+                        </div>
+                    </div>
+                    <div id="pesDiff" class="pes-diff hidden"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel-edit" id="cancelRecibir">Cancelar</button>
+                    <button type="button" class="btn-submit btn-transfer" id="confirmarRecibir">
+                        <span class="btn-text">Confirmar Recepción</span>
+                        <span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-content">
+                <p class="toast-title" id="toastTitle">Éxito</p>
+                <p class="toast-message" id="toastMessage">Operación exitosa</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="transferencias.js"></script>
+</body>
+</html>
