@@ -1,5 +1,5 @@
 /* ============================================
-   YOOPS - Transferencias (Bidireccional)
+   YOOPS - Transferencias (Solo Laboratorio)
    Application Logic
    ============================================ */
 
@@ -16,9 +16,7 @@ const HEADERS = {
 const LOCALES_TIENDA = ['Plaza Numa', 'Grand Plaza', 'Rio de Piedras'];
 
 let currentUser = null;
-let isProduccion = false; // true = Laboratorio, false = tienda
 let allArticulos = [];
-let selectedRecord = null;
 let highlightedIdx = -1;
 
 // =============================================
@@ -26,14 +24,10 @@ let highlightedIdx = -1;
 // =============================================
 
 const notLoggedScreen = document.getElementById('notLoggedScreen');
+const noAccessScreen = document.getElementById('noAccessScreen');
 const mainScreen = document.getElementById('mainScreen');
-const roleSubtitle = document.getElementById('roleSubtitle');
 const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
-
-// Alert
-const alertBanner = document.getElementById('alertBanner');
-const alertText = document.getElementById('alertText');
 
 // Form
 const nuevoForm = document.getElementById('nuevoForm');
@@ -41,10 +35,8 @@ const productoInput = document.getElementById('productoInput');
 const productoValue = document.getElementById('productoValue');
 const productoDropdown = document.getElementById('productoDropdown');
 const productoList = document.getElementById('productoList');
-const destinoGroup = document.getElementById('destinoGroup');
 const destinoSelect = document.getElementById('destinoSelect');
 const pesoInput = document.getElementById('pesoInput');
-const pesoLabel = document.getElementById('pesoLabel');
 const submitBtn = document.getElementById('submitBtn');
 
 // Auto info
@@ -57,21 +49,6 @@ const recordsList = document.getElementById('recordsList');
 const emptyState = document.getElementById('emptyState');
 const recordCount = document.getElementById('recordCount');
 const refreshBtn = document.getElementById('refreshBtn');
-
-// Modal
-const addWeightModal = document.getElementById('addWeightModal');
-const closeModal = document.getElementById('closeModal');
-const cancelModal = document.getElementById('cancelModal');
-const confirmModal = document.getElementById('confirmModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalProducto = document.getElementById('modalProducto');
-const modalDestino = document.getElementById('modalDestino');
-const modalCreadoPor = document.getElementById('modalCreadoPor');
-const modalOtroPesoLabel = document.getElementById('modalOtroPesoLabel');
-const modalOtroPeso = document.getElementById('modalOtroPeso');
-const modalPesoInput = document.getElementById('modalPesoInput');
-const modalPesoLabel = document.getElementById('modalPesoLabel');
-const pesDiff = document.getElementById('pesDiff');
 
 // Toast
 const toast = document.getElementById('toast');
@@ -114,7 +91,7 @@ function formatDateTime(ts) {
 }
 
 function switchScreen(id) {
-    [notLoggedScreen, mainScreen].forEach(s => s.classList.add('hidden'));
+    [notLoggedScreen, noAccessScreen, mainScreen].forEach(s => s.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
 }
 
@@ -261,82 +238,36 @@ document.addEventListener('click', (e) => {
 });
 
 // =============================================
-//  Setup UI by Role
+//  Populate Destinos
 // =============================================
 
-function setupRoleUI() {
-    if (isProduccion) {
-        // Producción → envía, campo = transferencia
-        roleSubtitle.textContent = 'Producción → Envío a locales';
-        pesoLabel.textContent = 'Peso de transferencia';
-        destinoGroup.style.display = 'block';
-
-        // Populate destinos (all stores)
-        destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
-        LOCALES_TIENDA.forEach(local => {
-            const opt = document.createElement('option');
-            opt.value = local;
-            opt.textContent = `📍 ${local}`;
-            destinoSelect.appendChild(opt);
-        });
-    } else {
-        // Tienda → recibe, campo = recepcion
-        roleSubtitle.textContent = `Recepción → ${currentUser.nombre_local}`;
-        pesoLabel.textContent = 'Peso de recepción';
-        destinoGroup.style.display = 'none';
-        destinoSelect.removeAttribute('required');
-    }
+function populateDestinos() {
+    destinoSelect.innerHTML = '<option value="" disabled selected>Selecciona destino...</option>';
+    LOCALES_TIENDA.forEach(local => {
+        const opt = document.createElement('option');
+        opt.value = local;
+        opt.textContent = `📍 ${local}`;
+        destinoSelect.appendChild(opt);
+    });
 }
 
 // =============================================
-//  API: Load Records (Today)
+//  Load Records (Today)
 // =============================================
 
 async function loadRecords() {
     try {
         const today = getTodayISO();
-        let url;
-
-        if (isProduccion) {
-            // Producción sees ALL today's transfers
-            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
-        } else {
-            // Store sees only transfers to their local
-            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(currentUser.nombre_local)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
-        }
-
-        const res = await fetch(url, { headers: HEADERS });
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`,
+            { headers: HEADERS }
+        );
         if (!res.ok) throw new Error('Error loading records');
         const records = await res.json();
-
         renderRecords(records);
-        updateAlert(records);
         recordCount.textContent = records.length;
     } catch (err) {
         console.error('Error loading records:', err);
-    }
-}
-
-// =============================================
-//  Alert Banner
-// =============================================
-
-function updateAlert(records) {
-    let pendingCount = 0;
-
-    if (isProduccion) {
-        // Records where transferencia is null (store created first, I need to add my weight)
-        pendingCount = records.filter(r => r.transferencia == null).length;
-    } else {
-        // Records where recepcion is null (production created first, I need to add my weight)
-        pendingCount = records.filter(r => r.recepcion == null).length;
-    }
-
-    if (pendingCount > 0) {
-        alertText.textContent = `${pendingCount} pendiente${pendingCount > 1 ? 's' : ''} de tu peso`;
-        alertBanner.classList.remove('hidden');
-    } else {
-        alertBanner.classList.add('hidden');
     }
 }
 
@@ -356,16 +287,7 @@ function renderRecords(records) {
     recordsList.style.display = 'flex';
     emptyState.classList.remove('visible');
 
-    // Sort: items needing my weight first
-    const sorted = [...records].sort((a, b) => {
-        const aNeedsMine = isProduccion ? (a.transferencia == null) : (a.recepcion == null);
-        const bNeedsMine = isProduccion ? (b.transferencia == null) : (b.recepcion == null);
-        if (aNeedsMine && !bNeedsMine) return -1;
-        if (!aNeedsMine && bNeedsMine) return 1;
-        return 0;
-    });
-
-    sorted.forEach((r, idx) => {
+    records.forEach((r, idx) => {
         const card = createRecordCard(r, idx);
         recordsList.appendChild(card);
     });
@@ -375,11 +297,6 @@ function createRecordCard(r, idx) {
     const card = document.createElement('div');
     card.className = 'transfer-card';
     card.style.animationDelay = `${idx * 0.05}s`;
-
-    // Determine if this card needs the current user's attention
-    const needsMine = isProduccion ? (r.transferencia == null) : (r.recepcion == null);
-
-    if (needsMine) card.classList.add('needs-attention');
 
     const estadoClass = r.estado === 'pendiente' ? 'estado-pendiente' : 'estado-completado';
     const estadoLabel = r.estado === 'pendiente' ? '⏳ Pendiente' : '✅ Completado';
@@ -394,7 +311,7 @@ function createRecordCard(r, idx) {
         </div>
         <div class="transfer-weights">
             <div class="weight-box">
-                <div class="weight-label">Transferencia (Envío)</div>
+                <div class="weight-label">Transferencia</div>
                 <div class="weight-value ${transVal ? 'weight-highlight' : 'weight-empty'}">
                     ${transVal || 'Sin registrar'}
                 </div>
@@ -402,7 +319,7 @@ function createRecordCard(r, idx) {
             <div class="weight-box">
                 <div class="weight-label">Recepción</div>
                 <div class="weight-value ${recepVal ? 'weight-highlight' : 'weight-empty'}">
-                    ${recepVal || 'Sin registrar'}
+                    ${recepVal || 'Sin confirmar'}
                 </div>
             </div>
         </div>
@@ -412,130 +329,11 @@ function createRecordCard(r, idx) {
                 <span>👤 ${r.creado_por}</span>
                 <span>🕐 ${formatDateTime(r.created_at)}</span>
             </div>
-            ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
         </div>
     `;
 
-    if (needsMine) {
-        card.querySelector('.btn-add-weight').addEventListener('click', () => openAddWeightModal(r));
-    }
-
     return card;
 }
-
-// =============================================
-//  Modal: Add Missing Weight
-// =============================================
-
-function openAddWeightModal(record) {
-    selectedRecord = record;
-
-    modalProducto.textContent = record.producto;
-    modalDestino.textContent = record.local_destino;
-    modalCreadoPor.textContent = record.creado_por;
-
-    if (isProduccion) {
-        // I'm production, need to add transferencia. The store already put recepcion.
-        modalTitle.textContent = 'Agregar Peso de Transferencia';
-        modalPesoLabel.textContent = 'Peso de transferencia';
-        modalOtroPesoLabel.textContent = 'Peso recepción (tienda)';
-        modalOtroPeso.textContent = record.recepcion != null ? `${formatNumber(record.recepcion)} g` : '—';
-    } else {
-        // I'm store, need to add recepcion. Production already put transferencia.
-        modalTitle.textContent = 'Agregar Peso de Recepción';
-        modalPesoLabel.textContent = 'Peso de recepción';
-        modalOtroPesoLabel.textContent = 'Peso transferencia (producción)';
-        modalOtroPeso.textContent = record.transferencia != null ? `${formatNumber(record.transferencia)} g` : '—';
-    }
-
-    modalPesoInput.value = '';
-    pesDiff.classList.add('hidden');
-    addWeightModal.classList.remove('hidden');
-    modalPesoInput.focus();
-}
-
-function closeAddWeightModal() {
-    selectedRecord = null;
-    addWeightModal.classList.add('hidden');
-    modalPesoInput.value = '';
-    pesDiff.classList.add('hidden');
-}
-
-closeModal.addEventListener('click', closeAddWeightModal);
-cancelModal.addEventListener('click', closeAddWeightModal);
-addWeightModal.addEventListener('click', (e) => {
-    if (e.target === addWeightModal) closeAddWeightModal();
-});
-
-// Live diff
-modalPesoInput.addEventListener('input', () => {
-    if (!selectedRecord) return;
-    const myPeso = parseFloat(modalPesoInput.value) || 0;
-    const otherPeso = isProduccion
-        ? (selectedRecord.recepcion || 0)
-        : (selectedRecord.transferencia || 0);
-
-    if (myPeso <= 0 || otherPeso <= 0) {
-        pesDiff.classList.add('hidden');
-        return;
-    }
-
-    const diff = myPeso - otherPeso;
-    const percent = otherPeso > 0 ? ((diff / otherPeso) * 100).toFixed(1) : 0;
-
-    if (Math.abs(diff) <= 10) {
-        pesDiff.className = 'pes-diff pes-diff-ok';
-        pesDiff.textContent = `✅ Coincide (diferencia: ${diff > 0 ? '+' : ''}${formatNumber(diff)} g)`;
-    } else {
-        pesDiff.className = 'pes-diff pes-diff-warn';
-        pesDiff.textContent = `⚠️ Diferencia: ${diff > 0 ? '+' : ''}${formatNumber(diff)} g (${percent}%)`;
-    }
-    pesDiff.classList.remove('hidden');
-});
-
-// Confirm
-confirmModal.addEventListener('click', async () => {
-    if (!selectedRecord) return;
-    const peso = parseFloat(modalPesoInput.value);
-
-    if (!peso || peso <= 0) {
-        showToast('error', 'Peso inválido', 'Ingresa un peso válido');
-        return;
-    }
-
-    confirmModal.classList.add('loading');
-
-    try {
-        const updateData = {};
-
-        if (isProduccion) {
-            updateData.transferencia = peso;
-        } else {
-            updateData.recepcion = peso;
-        }
-
-        // Check if both weights will be present → completado
-        const otherWeight = isProduccion ? selectedRecord.recepcion : selectedRecord.transferencia;
-        if (otherWeight != null) {
-            updateData.estado = 'completado';
-        }
-
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2?id=eq.${selectedRecord.id}`,
-            { method: 'PATCH', headers: HEADERS, body: JSON.stringify(updateData) }
-        );
-        if (!res.ok) throw new Error('Error');
-
-        showToast('success', '¡Peso registrado!', `${selectedRecord.producto} actualizado`);
-        closeAddWeightModal();
-        await loadRecords();
-    } catch (err) {
-        console.error('Error:', err);
-        showToast('error', 'Error', 'No se pudo guardar el peso');
-    } finally {
-        confirmModal.classList.remove('loading');
-    }
-});
 
 // =============================================
 //  New Record Form
@@ -550,21 +348,16 @@ nuevoForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    const destino = destinoSelect.value;
+    if (!destino) {
+        showToast('error', 'Destino requerido', 'Selecciona el local de destino');
+        return;
+    }
+
     const peso = parseFloat(pesoInput.value);
     if (!peso || peso <= 0) {
         showToast('error', 'Peso inválido', 'Ingresa un peso válido');
         return;
-    }
-
-    let local_destino;
-    if (isProduccion) {
-        local_destino = destinoSelect.value;
-        if (!local_destino) {
-            showToast('error', 'Destino requerido', 'Selecciona el local de destino');
-            return;
-        }
-    } else {
-        local_destino = currentUser.nombre_local;
     }
 
     submitBtn.classList.add('loading');
@@ -572,19 +365,12 @@ nuevoForm.addEventListener('submit', async (e) => {
     try {
         const record = {
             producto,
-            local_destino,
+            local_destino: destino,
+            transferencia: peso,
             creado_por: currentUser.usuario,
-            creado_por_rol: isProduccion ? 'produccion' : 'tienda',
+            creado_por_rol: 'produccion',
             estado: 'pendiente'
         };
-
-        if (isProduccion) {
-            record.transferencia = peso;
-            // recepcion stays null
-        } else {
-            record.recepcion = peso;
-            // transferencia stays null
-        }
 
         const res = await fetch(
             `${SUPABASE_URL}/rest/v1/transferencias_v2`,
@@ -592,7 +378,7 @@ nuevoForm.addEventListener('submit', async (e) => {
         );
         if (!res.ok) throw new Error('Error al crear registro');
 
-        showToast('success', '¡Registrado!', `${producto} → ${local_destino}`);
+        showToast('success', '¡Registrado!', `${producto} → ${destino}`);
         nuevoForm.reset();
         productoValue.value = '';
         await loadRecords();
@@ -622,16 +408,20 @@ async function init() {
         return;
     }
 
-    currentUser = user;
-    isProduccion = user.nombre_local === 'Laboratorio';
+    // Solo Laboratorio tiene acceso
+    if (user.nombre_local !== 'Laboratorio') {
+        switchScreen('noAccessScreen');
+        return;
+    }
 
+    currentUser = user;
     displayUserName.textContent = user.usuario;
     displayUserLocal.textContent = user.nombre_local;
     autoUser.textContent = user.usuario;
     autoLocal.textContent = user.nombre_local;
     autoDate.textContent = getTodayDisplay();
 
-    setupRoleUI();
+    populateDestinos();
     await loadArticulos();
     switchScreen('mainScreen');
     await loadRecords();
