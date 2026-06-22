@@ -339,7 +339,26 @@ function enterApp(user) {
         adminNav.classList.add('hidden');
     }
 
-    loadRecords();
+    // Laboratorio: ocultar vistas de tienda (fabricación, topping, limpieza)
+    const isLab = user.nombre_local === 'Laboratorio';
+    const formCard = document.getElementById('formCard');
+    const recordsSection = document.getElementById('recordsSection');
+    const navTopping = document.getElementById('navTopping');
+    const navLimpieza = document.getElementById('navLimpieza');
+
+    if (isLab) {
+        if (formCard) formCard.style.display = 'none';
+        if (recordsSection) recordsSection.style.display = 'none';
+        if (navTopping) navTopping.style.display = 'none';
+        if (navLimpieza) navLimpieza.style.display = 'none';
+    } else {
+        if (formCard) formCard.style.display = '';
+        if (recordsSection) recordsSection.style.display = '';
+        if (navTopping) navTopping.style.display = '';
+        if (navLimpieza) navLimpieza.style.display = '';
+    }
+
+    if (!isLab) loadRecords();
 }
 
 // --- Login Form ---
