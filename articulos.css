@@ -418,7 +418,7 @@
 }
 
 /* --- Responsive --- */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .toolbar {
         flex-direction: column;
         gap: 10px;
@@ -427,6 +427,7 @@
     .btn-add {
         width: 100%;
         justify-content: center;
+        min-height: 44px;
     }
 
     .articulo-actions {
@@ -443,5 +444,28 @@
 
     .header-right .user-info {
         display: none;
+    }
+
+    .articulo-name {
+        font-size: 0.84rem;
+    }
+
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .modal-card {
+        max-width: 100%;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions button {
+        width: 100%;
+        min-height: 44px;
     }
 }

@@ -400,13 +400,14 @@
 }
 
 /* --- Responsive --- */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .step-fields {
         grid-template-columns: 1fr;
     }
 
     .record-weights {
         grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
     }
 
     .header-right .user-info {
@@ -423,6 +424,28 @@
 
     .btn-edit-record {
         opacity: 1;
+    }
+
+    .weight-item {
+        padding: 6px;
+    }
+
+    .weight-label {
+        font-size: 0.56rem;
+    }
+
+    .weight-value {
+        font-size: 0.82rem;
+    }
+
+    .record-card-header {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .btn-submit {
+        min-height: 48px;
+        width: 100%;
     }
 }
 

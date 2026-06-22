@@ -468,10 +468,141 @@
 }
 
 /* --- Responsive --- */
-@media (max-width: 640px) {
-    .modal-info-grid { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+    .btn-back {
+        width: 34px;
+        height: 34px;
+    }
+
     .header-right .user-info { display: none; }
-    .transfer-weights { grid-template-columns: 1fr 1fr; gap: 6px; }
+
+    /* Alert */
+    .alert-banner {
+        padding: 10px 14px;
+        font-size: 0.82rem;
+        margin-bottom: 12px;
+    }
+
+    /* Role badge */
+    .role-badge {
+        font-size: 0.6rem;
+        padding: 2px 8px;
+    }
+
+    /* Form */
+    .form-auto-info {
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+
+    .auto-chip {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    /* Searchable dropdown */
+    .searchable-dropdown {
+        max-height: 180px;
+    }
+
+    .searchable-item {
+        padding: 10px 12px;
+        font-size: 0.84rem;
+    }
+
+    /* Transfer cards */
+    .transfer-card {
+        padding: 12px 14px;
+    }
+
+    .transfer-producto {
+        font-size: 0.84rem;
+    }
+
+    .transfer-estado {
+        font-size: 0.62rem;
+    }
+
+    .transfer-weights {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .weight-box {
+        padding: 8px 6px;
+    }
+
+    .weight-label {
+        font-size: 0.56rem;
+    }
+
+    .weight-value {
+        font-size: 0.88rem;
+    }
+
+    .weight-value.weight-empty,
+    .weight-value.weight-confirmed {
+        font-size: 0.72rem;
+    }
+
+    .transfer-footer {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .transfer-meta {
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.68rem;
+    }
+
+    .btn-add-weight {
+        width: 100%;
+        text-align: center;
+        padding: 10px 14px;
+        font-size: 0.82rem;
+        min-height: 44px;
+    }
+
+    /* Modal slides up from bottom on mobile */
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .modal-card {
+        max-width: 100%;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .modal-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-footer button {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+    .transfer-weights {
+        grid-template-columns: 1fr;
+    }
+
+    .weight-box {
+        padding: 8px 10px;
+    }
 }
 
 @keyframes fadeIn {

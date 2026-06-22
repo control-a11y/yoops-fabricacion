@@ -1014,7 +1014,11 @@ body {
 }
 
 /* --- Responsive --- */
-@media (max-width: 640px) {
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
     .app-container {
         padding: 12px 10px 30px;
     }
@@ -1022,39 +1026,239 @@ body {
     .app-header {
         padding: 12px 14px;
         gap: 8px;
+        margin-bottom: 16px;
+        border-radius: var(--radius-md);
     }
 
-    .user-info { display: none; }
+    .app-title {
+        font-size: 1.1rem;
+    }
+
+    .app-subtitle {
+        font-size: 0.65rem;
+    }
+
+    .logo-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .btn-logout {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Cards */
+    .card {
+        padding: 16px 14px;
+        border-radius: var(--radius-md);
+        margin-bottom: 14px;
+    }
+
+    .card-header {
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .card-title {
+        font-size: 0.95rem;
+    }
+
+    .card-header-actions {
+        gap: 6px;
+    }
+
+    /* Login */
+    .login-card {
+        margin: 20px auto 0;
+        padding: 24px 16px;
+    }
+
+    .login-title {
+        font-size: 1.5rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.82rem;
+    }
+
+    .logo-icon-lg {
+        width: 60px;
+        height: 60px;
+    }
+
+    /* Nav links */
+    .admin-nav-link,
+    .general-nav-link {
+        padding: 11px 14px;
+        font-size: 0.84rem;
+    }
+
+    .nav-link-icon,
+    .admin-nav-icon {
+        font-size: 1rem;
+    }
+
+    /* Form elements */
+    .form-group {
+        margin-bottom: 14px;
+    }
+
+    .form-label {
+        font-size: 0.72rem;
+        margin-bottom: 5px;
+    }
+
+    .input-wrapper input,
+    .input-wrapper textarea,
+    .select-wrapper select {
+        padding: 11px 12px;
+        font-size: 0.88rem;
+        min-height: 44px; /* Touch-friendly min height */
+    }
+
+    .input-suffix {
+        font-size: 0.72rem;
+        right: 10px;
+    }
 
     .form-grid-simple {
         grid-template-columns: 1fr;
         gap: 14px;
     }
 
-    .card {
-        padding: 18px 14px;
-        border-radius: var(--radius-lg);
+    .form-grid-2x2 {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
     }
 
-    .login-card {
-        margin: 30px auto 0;
-        padding: 28px 18px;
+    /* Buttons */
+    .btn-submit {
+        padding: 13px 20px;
+        font-size: 0.9rem;
+        width: 100%;
+        min-height: 48px;
     }
 
-    .records-table thead th,
+    .form-actions {
+        margin-top: 8px;
+    }
+
+    /* Table responsive */
+    .table-container {
+        margin: 0 -14px;
+        padding: 0 14px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .records-table thead th {
+        padding: 8px 10px;
+        font-size: 0.62rem;
+        white-space: nowrap;
+    }
+
     .records-table tbody td {
-        padding: 9px 8px;
+        padding: 9px 10px;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    .records-table .col-hide-mobile {
+        display: none;
+    }
+
+    /* Status badges */
+    .status-badge {
+        font-size: 0.62rem;
+        padding: 2px 7px;
+    }
+
+    .id-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+
+    /* Blobs */
+    .blob-1 { width: 250px; height: 250px; }
+    .blob-2 { width: 200px; height: 200px; }
+    .blob-3 { width: 160px; height: 160px; }
+
+    /* Toast */
+    .toast {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        max-width: 100%;
+        padding: 12px 14px;
+    }
+
+    .toast-title {
         font-size: 0.78rem;
     }
 
-    .blob-1 { width: 300px; height: 300px; }
-    .blob-2 { width: 250px; height: 250px; }
-    .blob-3 { width: 200px; height: 200px; }
+    .toast-message {
+        font-size: 0.7rem;
+    }
 
-    .toast {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
+    /* Edit modal */
+    .modal-overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+
+    .modal-card.card {
+        padding: 18px 14px;
+        max-height: 85vh;
+        overflow-y: auto;
+        border-radius: var(--radius-lg) var(--radius-lg) var(--radius-md) var(--radius-md);
+    }
+
+    .modal-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    /* Stat chips */
+    .stat-chip {
+        font-size: 0.68rem;
+        padding: 3px 8px;
+    }
+
+    .btn-refresh {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Records list */
+    .records-list {
+        gap: 10px;
+    }
+
+    /* Empty state */
+    .empty-state .empty-icon {
+        font-size: 2rem;
+    }
+
+    .empty-state .empty-text {
+        font-size: 0.88rem;
+    }
+
+    .empty-state .empty-sub {
+        font-size: 0.75rem;
     }
 }
 
