@@ -1,31 +1,9 @@
 /* ============================================
    YOOPS - Fabricación de Yogurt
    Application Logic with Auth + Custom IDs
+   (config.js + utils.js loaded before this file)
    ============================================ */
 
-// --- Supabase Configuration ---
-const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxbm9ua2pka3BsenpvdmVkYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTczMDcsImV4cCI6MjA5NjY3MzMwN30.h4mzHITI0cka8G8SlZEL1MfQjSLF7ZnWl0b3-2BCywQ';
-
-const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-};
-
-// --- Sabor mapping ---
-const SABOR_MAP = {
-    natural: { emoji: '🥛', label: 'Natural', code: 'NAT' },
-    taro:    { emoji: '🟣', label: 'Taro',    code: 'TAR' },
-    carbon:  { emoji: '⚫', label: 'Carbón',  code: 'CAR' },
-    vegano:  { emoji: '🌱', label: 'Vegano',  code: 'VEG' },
-    asaid:   { emoji: '🫐', label: 'Açaí',    code: 'ACA' }
-};
-
-const SABORES = Object.entries(SABOR_MAP).map(([key, info]) => `${info.emoji} ${info.label}`);
-const SABOR_REVERSE = {};
-Object.entries(SABOR_MAP).forEach(([key, info]) => { SABOR_REVERSE[`${info.emoji} ${info.label}`] = key; });
 let saborCombo = null;
 
 // --- Local code mapping ---
@@ -91,66 +69,11 @@ const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Toast
-const toast = document.getElementById('toast');
-const toastIcon = document.getElementById('toastIcon');
-const toastTitle = document.getElementById('toastTitle');
-const toastMessage = document.getElementById('toastMessage');
+// Toast is now handled by utils.js showToast()
 
 // =============================================
-//  Utility Functions
+//  Utility Functions (shared ones in utils.js)
 // =============================================
-
-function showToast(type, title, message) {
-    toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toast.classList.remove('toast-error');
-    if (type === 'error') toast.classList.add('toast-error');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
-
-function showError(el, msg) {
-    el.textContent = msg;
-    el.classList.add('visible');
-}
-
-function clearError(el) {
-    el.textContent = '';
-    el.classList.remove('visible');
-}
-
-function formatTime(timeStr) {
-    if (!timeStr) return '—';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    const hours = parseInt(parts[0], 10);
-    const minutes = parts[1];
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = hours % 12 || 12;
-    return `${displayHour}:${minutes} ${period}`;
-}
-
-function formatNumber(num) {
-    return Number(num).toLocaleString('es-MX');
-}
-
-function getTodayISO() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
-/**
- * Get date string in DDMMYY format for the ID
- */
-function getDateForId() {
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, '0');
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const yy = String(now.getFullYear()).slice(-2);
-    return `${dd}${mm}${yy}`;
-}
 
 function switchScreen(screenId) {
     [loginScreen, registerScreen, selectLocalScreen, appScreen].forEach(s => s.classList.add('hidden'));
@@ -257,27 +180,14 @@ function isValidLocal(nombreLocal) {
 //  Auth / Session
 // =============================================
 
-function saveSession(user) {
+function saveSessionLocal(user) {
     currentUser = user;
-    localStorage.setItem('yoops_session', JSON.stringify({
-        id: user.id,
-        usuario: user.usuario,
-        nombre_local: user.nombre_local,
-        rol: user.rol
-    }));
+    saveSession(user);
 }
 
-function loadSession() {
-    const saved = localStorage.getItem('yoops_session');
-    if (saved) {
-        try { return JSON.parse(saved); } catch (e) { return null; }
-    }
-    return null;
-}
-
-function clearSession() {
+function clearSessionLocal() {
     currentUser = null;
-    localStorage.removeItem('yoops_session');
+    clearSession();
 }
 
 async function loginUser_api(usuario, contrasena) {
@@ -332,7 +242,7 @@ async function updateUserLocal(userId, nombre_local) {
 // =============================================
 
 function enterApp(user) {
-    saveSession(user);
+    saveSessionLocal(user);
     displayUserName.textContent = user.usuario;
     displayUserLocal.textContent = user.nombre_local;
     switchScreen('appScreen');
@@ -372,7 +282,7 @@ function enterApp(user) {
             dropdownEl: document.getElementById('saborDropdown'),
             listEl: document.getElementById('saborList'),
             containerId: 'saborCombobox',
-            items: SABORES
+            items: SABORES_DISPLAY
         });
     }
 
@@ -495,7 +405,7 @@ showLoginBtn.addEventListener('click', () => {
 
 // --- Logout ---
 logoutBtn.addEventListener('click', () => {
-    clearSession();
+    clearSessionLocal();
     loginUser.value = '';
     loginPass.value = '';
     clearError(loginError);
@@ -556,14 +466,14 @@ function renderRecords(records) {
         const displayId = record.id_fab || '—';
 
         tr.innerHTML = `
-            <td><span class="id-badge" title="${displayId}">${displayId}</span></td>
+            <td><span class="id-badge" title="${escapeHtml(displayId)}">${escapeHtml(displayId)}</span></td>
             <td>
-                <span class="sabor-badge sabor-${record.sabor}">
-                    ${saborInfo.emoji} ${saborInfo.label}
+                <span class="sabor-badge sabor-${escapeHtml(record.sabor)}">
+                    ${escapeHtml(saborInfo.emoji)} ${escapeHtml(saborInfo.label)}
                 </span>
             </td>
             <td><span class="peso-value">${formatNumber(record.cantidad)}</span></td>
-            <td>${record.creado_por || '—'}</td>
+            <td>${escapeHtml(record.creado_por) || '—'}</td>
             <td><span class="hora-value">${formatTime(record.hora)}</span></td>
         `;
         recordsBody.appendChild(tr);
@@ -674,7 +584,7 @@ async function init() {
         } catch (e) {
             console.error('Session validation error:', e);
         }
-        clearSession();
+        clearSessionLocal();
     }
 
     switchScreen('loginScreen');

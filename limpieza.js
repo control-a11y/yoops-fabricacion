@@ -1,32 +1,12 @@
 /* ============================================
    YOOPS - Limpieza de Máquina
    Application Logic
+   Requires: config.js, utils.js, searchable-combo.js
    ============================================ */
-
-const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxbm9ua2pka3BsenpvdmVkYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTczMDcsImV4cCI6MjA5NjY3MzMwN30.h4mzHITI0cka8G8SlZEL1MfQjSLF7ZnWl0b3-2BCywQ';
-
-const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-};
-
-const SABOR_MAP = {
-    natural: { emoji: '🥛', label: 'Natural' },
-    taro:    { emoji: '🟣', label: 'Taro' },
-    carbon:  { emoji: '⚫', label: 'Carbón' },
-    vegano:  { emoji: '🌱', label: 'Vegano' },
-    asaid:   { emoji: '🫐', label: 'Açaí' }
-};
 
 let currentUser = null;
 let editingId = null; // UUID of the record being edited, null for new
 let todayRecords = [];
-
-const SABORES_LIMPIEZA = ['🥛 Natural', '🟣 Taro', '⚫ Carbón', '🌱 Vegano', '🫐 Açaí'];
-const SABOR_REVERSE_LIMP = { '🥛 Natural': 'natural', '🟣 Taro': 'taro', '⚫ Carbón': 'carbon', '🌱 Vegano': 'vegano', '🫐 Açaí': 'asaid' };
 let saborCombo = null;
 
 // =============================================
@@ -59,48 +39,9 @@ const emptyState = document.getElementById('emptyState');
 const refreshBtn = document.getElementById('refreshBtn');
 const todayCount = document.getElementById('todayCount');
 
-const toast = document.getElementById('toast');
-const toastIcon = document.getElementById('toastIcon');
-const toastTitle = document.getElementById('toastTitle');
-const toastMessage = document.getElementById('toastMessage');
-
 // =============================================
-//  Utilities
+//  Local Utilities
 // =============================================
-
-function showToast(type, title, message) {
-    toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toast.classList.remove('toast-error');
-    if (type === 'error') toast.classList.add('toast-error');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
-
-function formatTime(timeStr) {
-    if (!timeStr) return '—';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    const hours = parseInt(parts[0], 10);
-    const minutes = parts[1];
-    const period = hours >= 12 ? 'PM' : 'AM';
-    return `${hours % 12 || 12}:${minutes} ${period}`;
-}
-
-function formatNumber(num) {
-    if (num === null || num === undefined || num === '') return '—';
-    return Number(num).toLocaleString('es-MX');
-}
-
-function getTodayISO() {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-}
-
-function getTodayDisplay() {
-    return new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 function switchScreen(id) {
     [notLoggedScreen, limpiezaScreen].forEach(s => s.classList.add('hidden'));
@@ -109,33 +50,6 @@ function switchScreen(id) {
 
 function getVal(el) {
     return el.value !== '' ? parseFloat(el.value) : null;
-}
-
-// =============================================
-//  Auth
-// =============================================
-
-function loadSession() {
-    const s = localStorage.getItem('yoops_session');
-    if (s) { try { return JSON.parse(s); } catch (e) { return null; } }
-    return null;
-}
-
-async function verifySession() {
-    const session = loadSession();
-    if (!session || !session.id) return null;
-    try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${session.id}&activo=eq.true&select=*`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) return null;
-        const users = await res.json();
-        return users.length > 0 ? users[0] : null;
-    } catch (e) {
-        console.error('Session error:', e);
-        return null;
-    }
 }
 
 // =============================================
@@ -274,10 +188,10 @@ function renderRecords(records) {
 
         card.innerHTML = `
             <div class="record-card-header">
-                <span class="record-sabor">${saborInfo.emoji} ${saborInfo.label}</span>
+                <span class="record-sabor">${escapeHtml(saborInfo.emoji)} ${escapeHtml(saborInfo.label)}</span>
                 <div class="record-card-right">
                     ${pendingBadge}
-                    <button class="btn-edit-record" data-id="${r.id}" title="Editar registro">
+                    <button class="btn-edit-record" data-id="${escapeHtml(r.id)}" title="Editar registro">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 </div>
@@ -305,7 +219,7 @@ function renderRecords(records) {
                 </div>
             </div>
             <div class="record-footer">
-                <span class="record-meta-item">👤 ${r.creado_por}</span>
+                <span class="record-meta-item">👤 ${escapeHtml(r.creado_por)}</span>
                 <span class="record-meta-item">🕐 ${formatTime(r.hora)}</span>
             </div>
         `;
@@ -334,7 +248,7 @@ limpiezaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const saborDisplay = saborValue.value;
-    const sabor = SABOR_REVERSE_LIMP[saborDisplay] || saborDisplay;
+    const sabor = SABOR_REVERSE[saborDisplay] || saborDisplay;
     if (!sabor) {
         showToast('error', 'Falta sabor', 'Selecciona el sabor de fabricación');
         return;
@@ -400,7 +314,13 @@ refreshBtn.addEventListener('click', async () => {
 // =============================================
 
 async function init() {
-    const user = await verifySession();
+    const session = loadSession();
+    if (!session) {
+        switchScreen('notLoggedScreen');
+        return;
+    }
+
+    const user = await verifySession(session);
     if (!user) {
         switchScreen('notLoggedScreen');
         return;
@@ -421,7 +341,7 @@ async function init() {
         dropdownEl: document.getElementById('saborDropdown'),
         listEl: document.getElementById('saborList'),
         containerId: 'saborCombobox',
-        items: SABORES_LIMPIEZA
+        items: SABORES_DISPLAY
     });
 
     await loadRecords();

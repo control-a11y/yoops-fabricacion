@@ -1,16 +1,7 @@
 /* ============================================
    YOOPS - Transferencias (Bidireccional + Auditoría)
+   (config.js + utils.js loaded before this file)
    ============================================ */
-
-const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxbm9ua2pka3BsenpvdmVkYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTczMDcsImV4cCI6MjA5NjY3MzMwN30.h4mzHITI0cka8G8SlZEL1MfQjSLF7ZnWl0b3-2BCywQ';
-
-const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-};
 
 const LOCALES_TIENDA = ['Plaza Numa', 'Grand Plaza', 'Rio de Piedras'];
 
@@ -69,39 +60,11 @@ const modalCreadoPor = document.getElementById('modalCreadoPor');
 const modalPesoInput = document.getElementById('modalPesoInput');
 const modalPesoLabel = document.getElementById('modalPesoLabel');
 
-// Toast
-const toast = document.getElementById('toast');
-const toastIcon = document.getElementById('toastIcon');
-const toastTitle = document.getElementById('toastTitle');
-const toastMessage = document.getElementById('toastMessage');
+// Toast is now handled by utils.js showToast()
 
 // =============================================
-//  Utilities
+//  Utilities (shared ones in utils.js)
 // =============================================
-
-function showToast(type, title, message) {
-    toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toast.classList.remove('toast-error');
-    if (type === 'error') toast.classList.add('toast-error');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
-
-function formatNumber(num) {
-    if (num === null || num === undefined) return '—';
-    return Number(num).toLocaleString('es-MX');
-}
-
-function getTodayISO() {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-}
-
-function getTodayDisplay() {
-    return new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 function formatDateTime(ts) {
     if (!ts) return '—';
@@ -117,27 +80,7 @@ function switchScreen(id) {
 //  Auth
 // =============================================
 
-function loadSession() {
-    const s = localStorage.getItem('yoops_session');
-    if (s) { try { return JSON.parse(s); } catch (e) { return null; } }
-    return null;
-}
-
-async function verifySession() {
-    const session = loadSession();
-    if (!session || !session.id) return null;
-    try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${session.id}&activo=eq.true&select=*`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) return null;
-        const users = await res.json();
-        return users.length > 0 ? users[0] : null;
-    } catch (e) {
-        return null;
-    }
-}
+// loadSession and verifySession now come from utils.js
 
 // =============================================
 //  Load Articulos
@@ -423,7 +366,7 @@ function createRecordCard(r, idx) {
 
     card.innerHTML = `
         <div class="transfer-card-header">
-            <span class="transfer-producto">📦 ${r.producto}</span>
+            <span class="transfer-producto">📦 ${escapeHtml(r.producto)}</span>
             <span class="transfer-estado ${estadoClass}">${estadoLabel}</span>
         </div>
         <div class="transfer-weights">
@@ -438,8 +381,8 @@ function createRecordCard(r, idx) {
         </div>
         <div class="transfer-footer">
             <div class="transfer-meta">
-                <span>📍 ${r.local_destino}</span>
-                <span>👤 ${r.creado_por}</span>
+                <span>📍 ${escapeHtml(r.local_destino)}</span>
+                <span>👤 ${escapeHtml(r.creado_por)}</span>
                 <span>🕐 ${formatDateTime(r.created_at)}</span>
             </div>
             ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
@@ -622,7 +565,9 @@ refreshBtn.addEventListener('click', async () => {
 // =============================================
 
 async function init() {
-    const user = await verifySession();
+    const session = loadSession();
+    if (!session || !session.id) { switchScreen('notLoggedScreen'); return; }
+    const user = await verifySession(session);
     if (!user) {
         switchScreen('notLoggedScreen');
         return;

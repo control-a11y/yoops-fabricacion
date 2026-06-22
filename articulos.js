@@ -1,18 +1,8 @@
 /* ============================================
    YOOPS - Artículos Admin
    Application Logic
+   (config.js + utils.js loaded before this file)
    ============================================ */
-
-// --- Supabase Configuration ---
-const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxbm9ua2pka3BsenpvdmVkYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTczMDcsImV4cCI6MjA5NjY3MzMwN30.h4mzHITI0cka8G8SlZEL1MfQjSLF7ZnWl0b3-2BCywQ';
-
-const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-};
 
 // --- State ---
 let currentUser = null;
@@ -54,25 +44,11 @@ const deleteItemName = document.getElementById('deleteItemName');
 const deleteCancelBtn = document.getElementById('deleteCancelBtn');
 const deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
 
-// Toast
-const toast = document.getElementById('toast');
-const toastIcon = document.getElementById('toastIcon');
-const toastTitle = document.getElementById('toastTitle');
-const toastMessage = document.getElementById('toastMessage');
+// Toast is now handled by utils.js showToast()
 
 // =============================================
-//  Utility Functions
+//  Utility Functions (shared ones in utils.js)
 // =============================================
-
-function showToast(type, title, message) {
-    toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toast.classList.remove('toast-error');
-    if (type === 'error') toast.classList.add('toast-error');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
 
 function showModalError(msg) {
     modalError.textContent = msg;
@@ -93,13 +69,7 @@ function switchScreen(screenId) {
 //  Auth Check
 // =============================================
 
-function loadSession() {
-    const saved = localStorage.getItem('yoops_session');
-    if (saved) {
-        try { return JSON.parse(saved); } catch (e) { return null; }
-    }
-    return null;
-}
+// loadSession now comes from utils.js
 
 /**
  * Verify user session and check admin role
@@ -233,15 +203,12 @@ function renderArticulos(articulos) {
         // Check if name has a tag like (MP)
         const tagMatch = name.match(/\(([^)]+)\)\s*$/);
         let displayName = name;
-        let tagHtml = '';
         if (tagMatch) {
             displayName = name.replace(tagMatch[0], '').trim();
-            tagHtml = `<span class="articulo-tag">${tagMatch[1]}</span>`;
         }
-
         row.innerHTML = `
             <span class="articulo-index">${index + 1}</span>
-            <span class="articulo-name">${displayName}${tagHtml}</span>
+            <span class="articulo-name">${escapeHtml(displayName)}${tagMatch ? `<span class="articulo-tag">${escapeHtml(tagMatch[1])}</span>` : ''}</span>
             <div class="articulo-actions">
                 <button class="btn-art-action btn-art-edit" title="Editar" data-name="${encodeURIComponent(name)}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

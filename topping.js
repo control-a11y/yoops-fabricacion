@@ -3,15 +3,9 @@
    Application Logic
    ============================================ */
 
-const SUPABASE_URL = 'https://wqnonkjdkplzzovedanr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxbm9ua2pka3BsenpvdmVkYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTczMDcsImV4cCI6MjA5NjY3MzMwN30.h4mzHITI0cka8G8SlZEL1MfQjSLF7ZnWl0b3-2BCywQ';
-
-const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-};
+// Config: SUPABASE_URL, SUPABASE_KEY, HEADERS loaded from config.js
+// Utils: showToast, formatTime, formatNumber, getTodayISO, getTodayDisplay,
+//        loadSession, verifySession, escapeHtml loaded from utils.js
 
 // --- State ---
 let currentUser = null;
@@ -45,87 +39,18 @@ const recordsTable = document.getElementById('recordsTable');
 const refreshBtn = document.getElementById('refreshBtn');
 const todayCount = document.getElementById('todayCount');
 
-const toast = document.getElementById('toast');
-const toastIcon = document.getElementById('toastIcon');
-const toastTitle = document.getElementById('toastTitle');
-const toastMessage = document.getElementById('toastMessage');
+
 
 let articuloCombo = null;
 
-// =============================================
-//  Utilities
-// =============================================
 
-function showToast(type, title, message) {
-    toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toast.classList.remove('toast-error');
-    if (type === 'error') toast.classList.add('toast-error');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
-}
-
-function formatTime(timeStr) {
-    if (!timeStr) return '—';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    const hours = parseInt(parts[0], 10);
-    const minutes = parts[1];
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = hours % 12 || 12;
-    return `${displayHour}:${minutes} ${period}`;
-}
-
-function formatNumber(num) {
-    return Number(num).toLocaleString('es-MX');
-}
-
-function getTodayISO() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
-function getTodayDisplay() {
-    const now = new Date();
-    const options = { day: 'numeric', month: 'short', year: 'numeric' };
-    return now.toLocaleDateString('es-MX', options);
-}
 
 function switchScreen(screenId) {
     [notLoggedScreen, toppingScreen].forEach(s => s.classList.add('hidden'));
     document.getElementById(screenId).classList.remove('hidden');
 }
 
-// =============================================
-//  Auth
-// =============================================
-
-function loadSession() {
-    const saved = localStorage.getItem('yoops_session');
-    if (saved) {
-        try { return JSON.parse(saved); } catch (e) { return null; }
-    }
-    return null;
-}
-
-async function verifySession() {
-    const session = loadSession();
-    if (!session || !session.id) return null;
-
-    try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${session.id}&activo=eq.true&select=*`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) return null;
-        const users = await res.json();
-        return users.length > 0 ? users[0] : null;
-    } catch (e) {
-        console.error('Session error:', e);
-        return null;
-    }
-}
+// Auth: loadSession(), verifySession() from utils.js
 
 // =============================================
 //  Load Articulos
@@ -239,19 +164,20 @@ function renderRecords(records) {
         tr.style.animationDelay = `${index * 0.03}s`;
 
         // Parse tag from article name
+        const safeArticulo = escapeHtml(record.articulo);
         const tagMatch = record.articulo.match(/\(([^)]+)\)\s*$/);
-        let displayName = record.articulo;
+        let displayName = safeArticulo;
         let tagHtml = '';
         if (tagMatch) {
-            displayName = record.articulo.replace(tagMatch[0], '').trim();
-            tagHtml = `<span class="art-tag">${tagMatch[1]}</span>`;
+            displayName = escapeHtml(record.articulo.replace(tagMatch[0], '').trim());
+            tagHtml = `<span class="art-tag">${escapeHtml(tagMatch[1])}</span>`;
         }
 
         tr.innerHTML = `
             <td><span class="row-index">${index + 1}</span></td>
             <td><span class="articulo-cell">${displayName}${tagHtml}</span></td>
             <td><span class="peso-value">${formatNumber(record.peso)}</span></td>
-            <td>${record.creado_por || '—'}</td>
+            <td>${escapeHtml(record.creado_por) || '—'}</td>
             <td><span class="hora-value">${formatTime(record.hora)}</span></td>
         `;
         recordsBody.appendChild(tr);
@@ -326,8 +252,13 @@ refreshBtn.addEventListener('click', async () => {
 // =============================================
 
 async function init() {
-    const user = await verifySession();
+    const session = loadSession();
+    if (!session) {
+        switchScreen('notLoggedScreen');
+        return;
+    }
 
+    const user = await verifySession(session);
     if (!user) {
         switchScreen('notLoggedScreen');
         return;

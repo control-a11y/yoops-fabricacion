@@ -3,28 +3,6 @@
    Additional styles
    ============================================ */
 
-/* --- Back button (shared with articulos) --- */
-.btn-back {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(167, 139, 250, 0.08);
-    border: 1px solid rgba(167, 139, 250, 0.15);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.btn-back:hover {
-    background: rgba(167, 139, 250, 0.18);
-    color: var(--accent-purple);
-    transform: translateX(-2px);
-}
-
 /* --- Topping accent color (warm orange) --- */
 .badge-topping {
     color: #fb923c !important;
