@@ -1,0 +1,139 @@
+/* ============================================
+   YOOPS - Consumo de Topping
+   Additional styles
+   ============================================ */
+
+/* --- Back button (shared with articulos) --- */
+.btn-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(167, 139, 250, 0.08);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.btn-back:hover {
+    background: rgba(167, 139, 250, 0.18);
+    color: var(--accent-purple);
+    transform: translateX(-2px);
+}
+
+/* --- Topping accent color (warm orange) --- */
+.badge-topping {
+    color: #fb923c !important;
+    background: rgba(251, 146, 60, 0.1) !important;
+    border-color: rgba(251, 146, 60, 0.2) !important;
+}
+
+.btn-topping {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #fb923c 100%) !important;
+    background-size: 200% 200% !important;
+}
+
+.btn-topping:hover {
+    box-shadow: 0 6px 28px rgba(234, 88, 12, 0.35), 0 0 20px rgba(251, 146, 60, 0.2) !important;
+}
+
+.stat-chip-orange {
+    background: rgba(251, 146, 60, 0.08);
+    border-color: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+}
+
+.stat-dot-orange {
+    background: #fb923c;
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.5);
+}
+
+/* --- Auto-detected info chips --- */
+.form-auto-info {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.auto-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(120, 100, 200, 0.06);
+    border: 1px solid rgba(120, 100, 200, 0.1);
+    border-radius: 100px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.auto-chip span:first-child {
+    font-size: 0.8rem;
+}
+
+/* --- Duplicate hint --- */
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--accent-red);
+    min-height: 16px;
+    display: block;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: var(--transition-normal);
+}
+
+.form-hint.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Article name in table --- */
+.articulo-cell {
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.articulo-cell .art-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.1);
+    border: 1px solid rgba(251, 146, 60, 0.15);
+    padding: 1px 5px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.row-index {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+    .form-auto-info {
+        gap: 6px;
+    }
+
+    .auto-chip {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+
+    .header-right .user-info {
+        display: none;
+    }
+}

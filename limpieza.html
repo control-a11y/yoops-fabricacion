@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoops - Limpieza de Máquina</title>
+    <meta name="description" content="Registro de limpieza de máquina de yogurt. Control de pesos y merma.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="limpieza.css">
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- NOT LOGGED -->
+        <div class="screen hidden" id="notLoggedScreen">
+            <div class="login-card card" style="text-align:center;">
+                <div class="login-logo">
+                    <div class="logo-icon-lg" style="font-size:2.5rem;">👤</div>
+                    <h1 class="login-title">Inicia Sesión</h1>
+                    <p class="login-subtitle" style="margin-top:8px;">Necesitas iniciar sesión para acceder.</p>
+                </div>
+                <a href="index.html" class="btn-submit" style="text-decoration:none;margin-top:16px;">
+                    <span class="btn-text">← Ir a Login</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN LIMPIEZA SCREEN -->
+        <div class="screen hidden" id="limpiezaScreen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="logo-section">
+                    <a href="index.html" class="btn-back" title="Volver">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </a>
+                    <div>
+                        <h1 class="app-title">Limpieza Máquina</h1>
+                        <p class="app-subtitle">Control de Pesos</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-name" id="displayUserName"></span>
+                        <span class="user-local" id="displayUserLocal"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Form Card -->
+            <section class="card form-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">🧽</span>
+                        Registro de Limpieza
+                    </h2>
+                    <span class="card-badge badge-limpieza">Limpieza</span>
+                </div>
+
+                <form id="limpiezaForm">
+                    <!-- Sabor -->
+                    <div class="form-section">
+                        <div class="form-group form-group-full">
+                            <label for="saborSelect" class="form-label">
+                                <span class="label-icon">🍦</span> Sabor de fabricación
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="saborSelect" required>
+                                    <option value="" disabled selected>Selecciona el sabor...</option>
+                                    <option value="natural">🥛 Natural</option>
+                                    <option value="taro">🟣 Taro</option>
+                                    <option value="carbon">⚫ Carbón</option>
+                                    <option value="vegano">🌱 Vegano</option>
+                                    <option value="asaid">🫐 Açaí</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: ANTES de la limpieza -->
+                    <div class="form-step">
+                        <div class="step-header">
+                            <span class="step-number">1</span>
+                            <div>
+                                <h3 class="step-title">Antes de la limpieza</h3>
+                                <p class="step-sub">Pesos iniciales de yogurt y agua</p>
+                            </div>
+                        </div>
+                        <div class="step-fields">
+                            <div class="form-group">
+                                <label for="mezclaInicial" class="form-label">
+                                    <span class="label-icon">🥛</span> Peso inicial yogurt (enjuague)
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="mezclaInicial" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">g</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="aguaInicial" class="form-label">
+                                    <span class="label-icon">💧</span> Peso inicial agua
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="aguaInicial" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Extracción -->
+                    <div class="form-step">
+                        <div class="step-header">
+                            <span class="step-number">2</span>
+                            <div>
+                                <h3 class="step-title">Extracción</h3>
+                                <p class="step-sub">Peso del yogurt al descargar la máquina (antes del enjuague)</p>
+                            </div>
+                        </div>
+                        <div class="step-fields">
+                            <div class="form-group form-group-full">
+                                <label for="productoExtraido" class="form-label">
+                                    <span class="label-icon">🫙</span> Peso yogurt extraído
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="productoExtraido" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: DESPUÉS de la limpieza -->
+                    <div class="form-step">
+                        <div class="step-header">
+                            <span class="step-number">3</span>
+                            <div>
+                                <h3 class="step-title">Después de la limpieza</h3>
+                                <p class="step-sub">Pesos finales después del enjuague</p>
+                            </div>
+                        </div>
+                        <div class="step-fields">
+                            <div class="form-group">
+                                <label for="mezclaFinal" class="form-label">
+                                    <span class="label-icon">🥛</span> Peso final mezcla (yogurt + enjuague)
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="mezclaFinal" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">g</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="aguaFinal" class="form-label">
+                                    <span class="label-icon">💧</span> Peso final agua
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="aguaFinal" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto info -->
+                    <div class="form-auto-info">
+                        <div class="auto-chip"><span>📍</span><span id="autoLocal">—</span></div>
+                        <div class="auto-chip"><span>👤</span><span id="autoUser">—</span></div>
+                        <div class="auto-chip"><span>📅</span><span id="autoDate">—</span></div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel-edit hidden" id="cancelEditBtn">Cancelar</button>
+                        <button type="submit" class="btn-submit btn-limpieza" id="submitBtn">
+                            <span class="btn-text" id="submitBtnText">Registrar Limpieza</span>
+                            <span class="btn-loader" id="btnLoader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Today's Records -->
+            <section class="card records-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📋</span>
+                        Registros de Hoy
+                    </h2>
+                    <div class="card-header-actions">
+                        <div class="stat-chip stat-chip-cyan">
+                            <span class="stat-dot stat-dot-cyan"></span>
+                            <span id="todayCount">0</span> registros
+                        </div>
+                        <button class="btn-refresh" id="refreshBtn" title="Actualizar">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="records-list" id="recordsList">
+                    <!-- Rendered by JS as cards -->
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">🧽</div>
+                    <p class="empty-text">Sin registros hoy</p>
+                    <p class="empty-sub">Registra la limpieza de la máquina</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-content">
+                <p class="toast-title" id="toastTitle">Éxito</p>
+                <p class="toast-message" id="toastMessage">Operación exitosa</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="limpieza.js"></script>
+</body>
+</html>

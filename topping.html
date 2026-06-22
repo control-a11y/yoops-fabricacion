@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoops - Consumo de Topping</title>
+    <meta name="description" content="Registro de consumo de toppings por peso. Control de inventario Yoops.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="topping.css">
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- ========== NOT LOGGED SCREEN ========== -->
+        <div class="screen hidden" id="notLoggedScreen">
+            <div class="login-card card" style="text-align:center;">
+                <div class="login-logo">
+                    <div class="logo-icon-lg" style="font-size: 2.5rem;">👤</div>
+                    <h1 class="login-title">Inicia Sesión</h1>
+                    <p class="login-subtitle" style="margin-top:8px;">Necesitas iniciar sesión para acceder.</p>
+                </div>
+                <a href="index.html" class="btn-submit" style="text-decoration:none; margin-top:16px;">
+                    <span class="btn-text">← Ir a Login</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ========== MAIN TOPPING SCREEN ========== -->
+        <div class="screen hidden" id="toppingScreen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="logo-section">
+                    <a href="index.html" class="btn-back" title="Volver a Fabricación">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </a>
+                    <div>
+                        <h1 class="app-title">Consumo Topping</h1>
+                        <p class="app-subtitle">Registro de Pesos</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-name" id="displayUserName"></span>
+                        <span class="user-local" id="displayUserLocal"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Form Card -->
+            <section class="card form-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">🧁</span>
+                        Registrar Consumo
+                    </h2>
+                    <span class="card-badge badge-topping">Topping</span>
+                </div>
+
+                <form id="toppingForm" class="form-grid-simple">
+                    <!-- Articulo -->
+                    <div class="form-group">
+                        <label for="articuloSelect" class="form-label">
+                            <span class="label-icon">📦</span>
+                            Artículo
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="articuloSelect" required>
+                                <option value="" disabled selected>Selecciona un artículo...</option>
+                            </select>
+                            <div class="select-arrow">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                        </div>
+                        <span class="form-hint" id="duplicateHint"></span>
+                    </div>
+
+                    <!-- Peso -->
+                    <div class="form-group">
+                        <label for="pesoInput" class="form-label">
+                            <span class="label-icon">⚖️</span>
+                            Peso (gramos)
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="pesoInput" placeholder="Ej: 1000" min="1" step="1" required>
+                            <span class="input-suffix">g</span>
+                        </div>
+                    </div>
+
+                    <!-- Auto-detected info -->
+                    <div class="form-auto-info">
+                        <div class="auto-chip">
+                            <span>📍</span>
+                            <span id="autoLocal">—</span>
+                        </div>
+                        <div class="auto-chip">
+                            <span>👤</span>
+                            <span id="autoUser">—</span>
+                        </div>
+                        <div class="auto-chip">
+                            <span>📅</span>
+                            <span id="autoDate">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit btn-topping" id="submitBtn">
+                            <span class="btn-text">Registrar Consumo</span>
+                            <span class="btn-loader" id="btnLoader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Today's Records -->
+            <section class="card records-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📋</span>
+                        Registros de Hoy
+                    </h2>
+                    <div class="card-header-actions">
+                        <div class="stat-chip stat-chip-orange">
+                            <span class="stat-dot stat-dot-orange"></span>
+                            <span id="todayCount">0</span> registros
+                        </div>
+                        <button class="btn-refresh" id="refreshBtn" title="Actualizar">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="records-table" id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Artículo</th>
+                                <th>Peso (g)</th>
+                                <th>Creado por</th>
+                                <th>Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsBody"></tbody>
+                    </table>
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">🧁</div>
+                        <p class="empty-text">Sin registros hoy</p>
+                        <p class="empty-sub">Registra el consumo de toppings</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-content">
+                <p class="toast-title" id="toastTitle">Éxito</p>
+                <p class="toast-message" id="toastMessage">Operación exitosa</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="topping.js"></script>
+</body>
+</html>

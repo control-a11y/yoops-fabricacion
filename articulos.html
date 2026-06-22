@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoops - Gestión de Artículos</title>
+    <meta name="description" content="Panel de administración de artículos Yoops. Solo acceso para administradores.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="articulos.css">
+</head>
+<body>
+    <!-- Animated background blobs -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- ========== ACCESS DENIED SCREEN ========== -->
+        <div class="screen hidden" id="accessDeniedScreen">
+            <div class="login-card card" style="text-align:center;">
+                <div class="login-logo">
+                    <div class="logo-icon-lg" style="font-size: 2.5rem;">🔒</div>
+                    <h1 class="login-title">Acceso Restringido</h1>
+                    <p class="login-subtitle" style="margin-top:8px;">Esta sección es solo para administradores.</p>
+                    <p class="login-subtitle" id="deniedUserInfo" style="margin-top:4px;"></p>
+                </div>
+                <a href="index.html" class="btn-submit" style="text-decoration:none; margin-top:16px;">
+                    <span class="btn-text">← Volver al Inicio</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ========== NOT LOGGED IN SCREEN ========== -->
+        <div class="screen hidden" id="notLoggedScreen">
+            <div class="login-card card" style="text-align:center;">
+                <div class="login-logo">
+                    <div class="logo-icon-lg" style="font-size: 2.5rem;">👤</div>
+                    <h1 class="login-title">Inicia Sesión</h1>
+                    <p class="login-subtitle" style="margin-top:8px;">Necesitas iniciar sesión para acceder a esta sección.</p>
+                </div>
+                <a href="index.html" class="btn-submit" style="text-decoration:none; margin-top:16px;">
+                    <span class="btn-text">← Ir a Login</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ========== MAIN ARTICULOS SCREEN ========== -->
+        <div class="screen hidden" id="articulosScreen">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="logo-section">
+                    <a href="index.html" class="btn-back" title="Volver a Fabricación">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </a>
+                    <div>
+                        <h1 class="app-title">Artículos</h1>
+                        <p class="app-subtitle">Panel de Administración</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="stat-chip stat-chip-purple">
+                        <span class="stat-dot stat-dot-purple"></span>
+                        <span id="totalArticulos">0</span> artículos
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="displayUserName"></span>
+                        <span class="admin-badge">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar artículo...">
+                    <button class="search-clear hidden" id="searchClear" title="Limpiar búsqueda">✕</button>
+                </div>
+                <button class="btn-add" id="addBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Agregar</span>
+                </button>
+            </div>
+
+            <!-- Articulos List -->
+            <section class="card articulos-card">
+                <div class="articulos-list" id="articulosList">
+                    <!-- Rendered by JS -->
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📦</div>
+                    <p class="empty-text">No se encontraron artículos</p>
+                    <p class="empty-sub" id="emptySubtext">Agrega tu primer artículo</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== MODAL: Add/Edit Articulo ========== -->
+        <div class="modal-overlay hidden" id="modalOverlay">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalTitle">Nuevo Artículo</h2>
+                    <button class="btn-modal-close" id="modalClose" title="Cerrar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <form id="articuloForm">
+                    <div class="form-group">
+                        <label for="articuloInput" class="form-label">
+                            <span class="label-icon">📦</span> Nombre del artículo
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" id="articuloInput" placeholder="Ej: GRANOLA (MP)" required>
+                        </div>
+                    </div>
+                    <div class="modal-error" id="modalError"></div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" id="modalCancelBtn">Cancelar</button>
+                        <button type="submit" class="btn-submit btn-modal-save" id="modalSaveBtn">
+                            <span class="btn-text">Guardar</span>
+                            <span class="btn-loader" id="modalLoader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========== MODAL: Delete Confirm ========== -->
+        <div class="modal-overlay hidden" id="deleteOverlay">
+            <div class="modal-card card modal-card-sm">
+                <div class="modal-header">
+                    <h2 class="modal-title">⚠️ Eliminar Artículo</h2>
+                </div>
+                <p class="delete-message">¿Estás seguro que deseas eliminar <strong id="deleteItemName"></strong>?</p>
+                <p class="delete-sub">Esta acción no se puede deshacer.</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="deleteCancelBtn">Cancelar</button>
+                    <button type="button" class="btn-delete-confirm" id="deleteConfirmBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-content">
+                <p class="toast-title" id="toastTitle">Éxito</p>
+                <p class="toast-message" id="toastMessage">Operación exitosa</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="articulos.js"></script>
+</body>
+</html>

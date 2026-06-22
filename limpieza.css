@@ -1,0 +1,433 @@
+/* ============================================
+   YOOPS - Limpieza de Máquina
+   Additional styles
+   ============================================ */
+
+/* --- Back button --- */
+.btn-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(167, 139, 250, 0.08);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.btn-back:hover {
+    background: rgba(167, 139, 250, 0.18);
+    color: var(--accent-purple);
+    transform: translateX(-2px);
+}
+
+/* --- Limpieza accent (cyan / teal) --- */
+.badge-limpieza {
+    color: #22d3ee !important;
+    background: rgba(34, 211, 238, 0.1) !important;
+    border-color: rgba(34, 211, 238, 0.2) !important;
+}
+
+.btn-limpieza {
+    background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #22d3ee 100%) !important;
+    background-size: 200% 200% !important;
+}
+
+.btn-limpieza:hover {
+    box-shadow: 0 6px 28px rgba(14, 116, 144, 0.35), 0 0 20px rgba(34, 211, 238, 0.2) !important;
+}
+
+.stat-chip-cyan {
+    background: rgba(34, 211, 238, 0.08);
+    border-color: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+}
+
+.stat-dot-cyan {
+    background: #22d3ee;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+}
+
+/* --- Form Steps --- */
+.form-section {
+    margin-bottom: 16px;
+}
+
+.form-group-full {
+    width: 100%;
+}
+
+.form-step {
+    background: rgba(120, 100, 200, 0.04);
+    border: 1px solid rgba(120, 100, 200, 0.08);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 14px;
+    transition: var(--transition-normal);
+}
+
+.form-step:hover {
+    border-color: rgba(120, 100, 200, 0.15);
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.25);
+    border-radius: 50%;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #22d3ee;
+    flex-shrink: 0;
+}
+
+.step-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.step-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.step-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* --- Calculation Panel --- */
+.calc-panel {
+    background: rgba(34, 211, 238, 0.04);
+    border: 1px solid rgba(34, 211, 238, 0.12);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 14px;
+    transition: var(--transition-normal);
+}
+
+.calc-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.calc-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: rgba(18, 18, 28, 0.5);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(120, 100, 200, 0.08);
+}
+
+.calc-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calc-formula {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    font-style: italic;
+}
+
+.calc-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition: color var(--transition-fast);
+}
+
+.calc-positive {
+    color: var(--accent-green);
+}
+
+.calc-negative {
+    color: var(--accent-red);
+}
+
+.calc-zero {
+    color: var(--text-muted);
+}
+
+/* --- Auto info chips --- */
+.form-auto-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.auto-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(120, 100, 200, 0.06);
+    border: 1px solid rgba(120, 100, 200, 0.1);
+    border-radius: 100px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.auto-chip span:first-child {
+    font-size: 0.8rem;
+}
+
+/* --- Records as cards (better for multi-field data) --- */
+.records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.record-card {
+    background: rgba(120, 100, 200, 0.04);
+    border: 1px solid rgba(120, 100, 200, 0.08);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    transition: var(--transition-fast);
+    animation: rowSlideIn 0.35s ease-out both;
+}
+
+.record-card:hover {
+    border-color: rgba(120, 100, 200, 0.15);
+    background: rgba(120, 100, 200, 0.06);
+}
+
+.record-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.record-sabor {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.record-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.record-weights {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.weight-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: center;
+    padding: 6px 4px;
+    background: rgba(18, 18, 28, 0.4);
+    border-radius: 6px;
+}
+
+.weight-label {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+}
+
+.weight-value {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Empty weight cell */
+.weight-empty {
+    opacity: 0.35;
+    border: 1px dashed rgba(120, 100, 200, 0.15);
+}
+
+.weight-empty .weight-value {
+    color: var(--text-muted);
+}
+
+/* Record footer */
+.record-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(120, 100, 200, 0.06);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.record-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Card header right area */
+.record-card-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Edit button on record */
+.btn-edit-record {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.15);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    opacity: 0;
+}
+
+.record-card:hover .btn-edit-record {
+    opacity: 1;
+}
+
+.btn-edit-record:hover {
+    background: rgba(34, 211, 238, 0.2);
+    color: #22d3ee;
+    border-color: rgba(34, 211, 238, 0.35);
+}
+
+/* Pending badge */
+.pending-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+.complete-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+/* Pending card outline */
+.record-pending {
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+/* Cancel edit button */
+.btn-cancel-edit {
+    padding: 12px 20px;
+    background: rgba(120, 100, 200, 0.08);
+    border: 1px solid rgba(120, 100, 200, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-cancel-edit:hover {
+    background: rgba(120, 100, 200, 0.15);
+    color: var(--text-primary);
+}
+
+.btn-cancel-edit.hidden {
+    display: none;
+}
+
+/* Form editing mode highlight */
+.form-card.editing {
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+}
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+    .step-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .record-weights {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .header-right .user-info {
+        display: none;
+    }
+
+    .form-step {
+        padding: 12px;
+    }
+
+    .form-auto-info {
+        gap: 6px;
+    }
+
+    .btn-edit-record {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 400px) {
+    .record-weights {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
