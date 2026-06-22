@@ -35,7 +35,10 @@ const pendingBadge = document.getElementById('pendingBadge');
 
 // Send form
 const enviarForm = document.getElementById('enviarForm');
-const productoSelect = document.getElementById('productoSelect');
+const productoInput = document.getElementById('productoInput');
+const productoValue = document.getElementById('productoValue');
+const productoDropdown = document.getElementById('productoDropdown');
+const productoList = document.getElementById('productoList');
 const destinoSelect = document.getElementById('destinoSelect');
 const pesoEnvio = document.getElementById('pesoEnvio');
 const notasEnvio = document.getElementById('notasEnvio');
@@ -178,6 +181,137 @@ function populateDestinos() {
         }
     });
 }
+
+// =============================================
+//  Load Articulos from DB
+// =============================================
+
+let allArticulos = [];
+
+async function loadArticulos() {
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/articulos?select="ARTICULO"&order="ARTICULO".asc`,
+            { headers: HEADERS }
+        );
+        if (!res.ok) throw new Error('Error loading articulos');
+        const data = await res.json();
+        allArticulos = data.map(a => a.ARTICULO).filter(Boolean);
+    } catch (err) {
+        console.error('Error loading articulos:', err);
+        allArticulos = [];
+    }
+}
+
+// =============================================
+//  Searchable Combobox Logic
+// =============================================
+
+let highlightedIdx = -1;
+
+function renderArticulosList(filter = '') {
+    productoList.innerHTML = '';
+    const query = filter.toLowerCase().trim();
+    const filtered = query
+        ? allArticulos.filter(a => a.toLowerCase().includes(query))
+        : allArticulos;
+
+    if (filtered.length === 0) {
+        productoList.innerHTML = '<div class="searchable-no-results">Sin resultados</div>';
+        return;
+    }
+
+    filtered.forEach((name, idx) => {
+        const item = document.createElement('div');
+        item.className = 'searchable-item';
+        if (name === productoValue.value) item.classList.add('selected');
+        item.dataset.value = name;
+        item.dataset.idx = idx;
+
+        // Highlight matching text
+        if (query) {
+            const lowerName = name.toLowerCase();
+            const matchStart = lowerName.indexOf(query);
+            if (matchStart >= 0) {
+                const before = name.substring(0, matchStart);
+                const match = name.substring(matchStart, matchStart + query.length);
+                const after = name.substring(matchStart + query.length);
+                item.innerHTML = `${before}<mark>${match}</mark>${after}`;
+            } else {
+                item.textContent = name;
+            }
+        } else {
+            item.textContent = name;
+        }
+
+        item.addEventListener('click', () => selectArticulo(name));
+        productoList.appendChild(item);
+    });
+
+    highlightedIdx = -1;
+}
+
+function selectArticulo(name) {
+    productoInput.value = name;
+    productoValue.value = name;
+    productoDropdown.classList.add('hidden');
+    highlightedIdx = -1;
+}
+
+function openDropdown() {
+    renderArticulosList(productoInput.value);
+    productoDropdown.classList.remove('hidden');
+}
+
+function closeDropdown() {
+    productoDropdown.classList.add('hidden');
+    highlightedIdx = -1;
+}
+
+// Input events
+productoInput.addEventListener('focus', openDropdown);
+
+productoInput.addEventListener('input', () => {
+    productoValue.value = ''; // Clear selection when typing
+    renderArticulosList(productoInput.value);
+    productoDropdown.classList.remove('hidden');
+});
+
+productoInput.addEventListener('keydown', (e) => {
+    const items = productoList.querySelectorAll('.searchable-item');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIdx = Math.min(highlightedIdx + 1, items.length - 1);
+        updateHighlight(items);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIdx = Math.max(highlightedIdx - 1, 0);
+        updateHighlight(items);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlightedIdx >= 0 && items[highlightedIdx]) {
+            selectArticulo(items[highlightedIdx].dataset.value);
+        }
+    } else if (e.key === 'Escape') {
+        closeDropdown();
+    }
+});
+
+function updateHighlight(items) {
+    items.forEach((el, i) => {
+        el.classList.toggle('highlighted', i === highlightedIdx);
+        if (i === highlightedIdx) el.scrollIntoView({ block: 'nearest' });
+    });
+}
+
+// Click outside to close
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#productoCombobox')) {
+        closeDropdown();
+    }
+});
 
 // =============================================
 //  API
@@ -437,7 +571,7 @@ confirmarRecibir.addEventListener('click', async () => {
 enviarForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const producto = productoSelect.value;
+    const producto = productoValue.value;
     const destino = destinoSelect.value;
     const peso = parseFloat(pesoEnvio.value);
     const notas = notasEnvio.value.trim();
@@ -467,6 +601,7 @@ enviarForm.addEventListener('submit', async (e) => {
 
         showToast('success', '¡Enviado!', `${producto} → ${destino}`);
         enviarForm.reset();
+        productoValue.value = '';
     } catch (err) {
         console.error('Send error:', err);
         showToast('error', 'Error', 'No se pudo crear la transferencia');
@@ -507,8 +642,9 @@ async function init() {
     autoDateEnvio.textContent = getTodayDisplay();
 
     populateDestinos();
+    await loadArticulos();
     switchScreen('transferenciasScreen');
-    await loadPendientes(); // Check for pending on load
+    await loadPendientes();
 }
 
 init();

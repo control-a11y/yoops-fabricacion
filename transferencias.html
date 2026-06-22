@@ -81,20 +81,17 @@
                     </div>
                     <form id="enviarForm">
                         <div class="form-group">
-                            <label for="productoSelect" class="form-label">
-                                <span class="label-icon">🍦</span> Producto
+                            <label for="productoInput" class="form-label">
+                                <span class="label-icon">📦</span> Artículo
                             </label>
-                            <div class="select-wrapper">
-                                <select id="productoSelect" required>
-                                    <option value="" disabled selected>Selecciona producto...</option>
-                                    <option value="Natural">🥛 Natural</option>
-                                    <option value="Taro">🟣 Taro</option>
-                                    <option value="Carbon">⚫ Carbón</option>
-                                    <option value="Vegano">🌱 Vegano</option>
-                                    <option value="Acai">🫐 Açaí</option>
-                                </select>
-                                <div class="select-arrow">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <div class="searchable-select" id="productoCombobox">
+                                <div class="input-wrapper">
+                                    <input type="text" id="productoInput" placeholder="Buscar artículo..." autocomplete="off" required>
+                                    <span class="input-suffix search-icon">🔍</span>
+                                </div>
+                                <input type="hidden" id="productoValue">
+                                <div class="searchable-dropdown hidden" id="productoDropdown">
+                                    <div class="searchable-list" id="productoList"></div>
                                 </div>
                             </div>
                         </div>
