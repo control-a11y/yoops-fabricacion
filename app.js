@@ -27,7 +27,8 @@ const SABOR_MAP = {
 const LOCAL_CODE_MAP = {
     'Plaza Numa':      'PN',
     'Grand Plaza':     'GP',
-    'Rio de Piedras':  'RP'
+    'Rio de Piedras':  'RP',
+    'Laboratorio':     'LAB'
 };
 
 // --- Known locales from the DB ---
@@ -223,7 +224,8 @@ async function loadLocales() {
         LOCALES = [
             { id: '1', nombre: 'Plaza Numa' },
             { id: '2', nombre: 'Grand Plaza' },
-            { id: '3', nombre: 'Rio de Piedras' }
+            { id: '3', nombre: 'Rio de Piedras' },
+            { id: '4', nombre: 'Laboratorio' }
         ];
     }
 
