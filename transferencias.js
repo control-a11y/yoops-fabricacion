@@ -146,7 +146,7 @@ async function verifySession() {
 async function loadArticulos() {
     try {
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/articulos?select="ARTICULO"&order="ARTICULO".asc`,
+            `${SUPABASE_URL}/rest/v1/articulos?select=ARTICULO&order=ARTICULO.asc`,
             { headers: HEADERS }
         );
         if (!res.ok) throw new Error('fail');

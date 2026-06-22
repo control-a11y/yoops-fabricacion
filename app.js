@@ -23,7 +23,9 @@ const SABOR_MAP = {
     asaid:   { emoji: '🫐', label: 'Açaí',    code: 'ACA' }
 };
 
-const SABORES = ['🥛 Natural', '🟣 Taro', '⚫ Carbón', '🌱 Vegano', '🫐 Açaí'];
+const SABORES = Object.entries(SABOR_MAP).map(([key, info]) => `${info.emoji} ${info.label}`);
+const SABOR_REVERSE = {};
+Object.entries(SABOR_MAP).forEach(([key, info]) => { SABOR_REVERSE[`${info.emoji} ${info.label}`] = key; });
 let saborCombo = null;
 
 // --- Local code mapping ---
@@ -572,7 +574,8 @@ function renderRecords(records) {
 fabricacionForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-        const sabor = saborValue.value;
+    const saborDisplay = saborValue.value;
+    const sabor = SABOR_REVERSE[saborDisplay] || saborDisplay;
     const cantidad = parseFloat(pesoInput.value);
 
     if (!sabor || !cantidad) {
@@ -581,7 +584,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
     }
 
         // Check for duplicate sabor today
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayISO();
         try {
             const dupRes = await fetch(
                 `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?sabor=eq.${encodeURIComponent(sabor)}&local=eq.${encodeURIComponent(currentUser.nombre_local)}&fecha=eq.${today}&select=id`,
@@ -590,10 +593,10 @@ fabricacionForm.addEventListener('submit', async (e) => {
             const existing = await dupRes.json();
             if (existing.length > 0) {
                 showToast('error', 'Duplicado', `"${sabor}" ya fue registrado hoy`);
-                submitBtn.classList.remove('loading');
+
                 return;
             }
-        } catch (e) {}
+        } catch (e) { console.error('Duplicate check failed:', e); }
 
     if (cantidad <= 0) {
         showToast('error', 'Peso inválido', 'El peso debe ser mayor a 0');
@@ -616,7 +619,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
 
         await createRecord(data);
 
-        const saborInfo = SABOR_MAP[sabor];
+        const saborInfo = SABOR_MAP[sabor] || { emoji: '🍦', label: sabor, code: 'UNK' };
         showToast('success', '¡Registrado!', `${id_fab} — ${saborInfo.emoji} ${formatNumber(cantidad)}g`);
 
         if (saborCombo) saborCombo.reset();

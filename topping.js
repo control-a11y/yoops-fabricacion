@@ -174,8 +174,10 @@ function checkDuplicateOnSelect(articulo) {
     if (isDuplicateToday(articulo)) {
         duplicateHint.textContent = `⚠️ "${articulo}" ya fue registrado hoy`;
         duplicateHint.style.color = '#f87171';
+        duplicateHint.classList.add('visible');
     } else {
         duplicateHint.textContent = '';
+        duplicateHint.classList.remove('visible');
     }
 }
 
@@ -297,6 +299,7 @@ toppingForm.addEventListener('submit', async (e) => {
         pesoInput.value = '';
         if (articuloCombo) articuloCombo.reset();
         duplicateHint.textContent = '';
+        duplicateHint.classList.remove('visible');
 
         await loadRecords();
     } catch (err) {

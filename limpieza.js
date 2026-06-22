@@ -23,8 +23,10 @@ const SABOR_MAP = {
 
 let currentUser = null;
 let editingId = null; // UUID of the record being edited, null for new
+let todayRecords = [];
 
 const SABORES_LIMPIEZA = ['🥛 Natural', '🟣 Taro', '⚫ Carbón', '🌱 Vegano', '🫐 Açaí'];
+const SABOR_REVERSE_LIMP = { '🥛 Natural': 'natural', '🟣 Taro': 'taro', '⚫ Carbón': 'carbon', '🌱 Vegano': 'vegano', '🫐 Açaí': 'asaid' };
 let saborCombo = null;
 
 // =============================================
@@ -148,7 +150,8 @@ async function loadRecords() {
             { headers: HEADERS }
         );
         if (!res.ok) throw new Error('Error al cargar registros');
-        const records = await res.json();
+        todayRecords = await res.json();
+        const records = todayRecords;
         renderRecords(records);
         todayCount.textContent = records.length;
     } catch (err) {
@@ -191,8 +194,10 @@ function enterEditMode(record) {
     editingId = record.id;
 
     // Fill form with existing data
-    saborInput.value = record.sabor;
-    saborValue.value = record.sabor;
+    const editSaborInfo = SABOR_MAP[record.sabor];
+    const editDisplay = editSaborInfo ? `${editSaborInfo.emoji} ${editSaborInfo.label}` : record.sabor;
+    saborInput.value = editDisplay;
+    saborValue.value = editDisplay;
     mezclaInicial.value = record.mezcla_inicial ?? '';
     aguaInicial.value = record.agua_inicial ?? '';
     productoExtraido.value = record.producto_extraido ?? '';
@@ -328,7 +333,8 @@ function renderRecords(records) {
 limpiezaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const sabor = saborValue.value;
+    const saborDisplay = saborValue.value;
+    const sabor = SABOR_REVERSE_LIMP[saborDisplay] || saborDisplay;
     if (!sabor) {
         showToast('error', 'Falta sabor', 'Selecciona el sabor de fabricación');
         return;
@@ -339,7 +345,7 @@ limpiezaForm.addEventListener('submit', async (e) => {
         const dupCheck = todayRecords.find(r => r.sabor === sabor && r.local === currentUser.nombre_local);
         if (dupCheck) {
             showToast('error', 'Duplicado', `"${sabor}" ya fue registrado hoy`);
-            submitBtn.classList.remove('loading');
+
             return;
         }
     }
@@ -356,7 +362,7 @@ limpiezaForm.addEventListener('submit', async (e) => {
     submitBtn.classList.add('loading');
 
     try {
-        const saborInfo = SABOR_MAP[sabor];
+        const saborInfo = SABOR_MAP[sabor] || { emoji: '🍦', label: sabor };
 
         if (editingId) {
             // UPDATE existing record
