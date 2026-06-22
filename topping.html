@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="topping.css">
+    <link rel="stylesheet" href="searchable-combo.css">
 </head>
 <body>
     <div class="bg-blobs">
@@ -68,16 +69,18 @@
                 <form id="toppingForm" class="form-grid-simple">
                     <!-- Articulo -->
                     <div class="form-group">
-                        <label for="articuloSelect" class="form-label">
+                        <label for="articuloInput" class="form-label">
                             <span class="label-icon">📦</span>
                             Artículo
                         </label>
-                        <div class="select-wrapper">
-                            <select id="articuloSelect" required>
-                                <option value="" disabled selected>Selecciona un artículo...</option>
-                            </select>
-                            <div class="select-arrow">
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <div class="searchable-select" id="articuloCombobox">
+                            <div class="input-wrapper">
+                                <input type="text" id="articuloInput" placeholder="Buscar artículo..." autocomplete="off">
+                                <span class="input-suffix search-icon">🔍</span>
+                            </div>
+                            <input type="hidden" id="articuloValue">
+                            <div class="searchable-dropdown hidden" id="articuloDropdown">
+                                <div class="searchable-list" id="articuloList"></div>
                             </div>
                         </div>
                         <span class="form-hint" id="duplicateHint"></span>
@@ -172,6 +175,7 @@
         </div>
     </div>
 
+    <script src="searchable-combo.js"></script>
     <script src="topping.js"></script>
 </body>
 </html>

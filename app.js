@@ -23,6 +23,9 @@ const SABOR_MAP = {
     asaid:   { emoji: '🫐', label: 'Açaí',    code: 'ACA' }
 };
 
+const SABORES = ['🥛 Natural', '🟣 Taro', '⚫ Carbón', '🌱 Vegano', '🫐 Açaí'];
+let saborCombo = null;
+
 // --- Local code mapping ---
 const LOCAL_CODE_MAP = {
     'Plaza Numa':      'PN',
@@ -73,7 +76,8 @@ const selectLocalUserName = document.getElementById('selectLocalUserName');
 
 // App
 const fabricacionForm = document.getElementById('fabricacionForm');
-const saborSelect = document.getElementById('saborSelect');
+const saborInput = document.getElementById('saborInput');
+const saborValue = document.getElementById('saborValue');
 const pesoInput = document.getElementById('pesoInput');
 const submitBtn = document.getElementById('submitBtn');
 const recordsBody = document.getElementById('recordsBody');
@@ -358,6 +362,18 @@ function enterApp(user) {
         if (navLimpieza) navLimpieza.style.display = '';
     }
 
+    // Initialize sabor combobox
+    if (!isLab && !saborCombo) {
+        saborCombo = new SearchableCombo({
+            inputEl: saborInput,
+            valueEl: saborValue,
+            dropdownEl: document.getElementById('saborDropdown'),
+            listEl: document.getElementById('saborList'),
+            containerId: 'saborCombobox',
+            items: SABORES
+        });
+    }
+
     if (!isLab) loadRecords();
 }
 
@@ -556,13 +572,28 @@ function renderRecords(records) {
 fabricacionForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const sabor = saborSelect.value;
+        const sabor = saborValue.value;
     const cantidad = parseFloat(pesoInput.value);
 
     if (!sabor || !cantidad) {
         showToast('error', 'Campos incompletos', 'Selecciona un sabor e ingresa el peso');
         return;
     }
+
+        // Check for duplicate sabor today
+        const today = new Date().toISOString().slice(0, 10);
+        try {
+            const dupRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?sabor=eq.${encodeURIComponent(sabor)}&local=eq.${encodeURIComponent(currentUser.nombre_local)}&fecha=eq.${today}&select=id`,
+                { headers: HEADERS }
+            );
+            const existing = await dupRes.json();
+            if (existing.length > 0) {
+                showToast('error', 'Duplicado', `"${sabor}" ya fue registrado hoy`);
+                submitBtn.classList.remove('loading');
+                return;
+            }
+        } catch (e) {}
 
     if (cantidad <= 0) {
         showToast('error', 'Peso inválido', 'El peso debe ser mayor a 0');
@@ -588,7 +619,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
         const saborInfo = SABOR_MAP[sabor];
         showToast('success', '¡Registrado!', `${id_fab} — ${saborInfo.emoji} ${formatNumber(cantidad)}g`);
 
-        saborSelect.value = '';
+        if (saborCombo) saborCombo.reset();
         pesoInput.value = '';
         pesoInput.focus();
 

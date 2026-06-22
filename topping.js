@@ -29,7 +29,8 @@ const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 
 const toppingForm = document.getElementById('toppingForm');
-const articuloSelect = document.getElementById('articuloSelect');
+const articuloInput = document.getElementById('articuloInput');
+const articuloValue = document.getElementById('articuloValue');
 const pesoInput = document.getElementById('pesoInput');
 const submitBtn = document.getElementById('submitBtn');
 const duplicateHint = document.getElementById('duplicateHint');
@@ -48,6 +49,8 @@ const toast = document.getElementById('toast');
 const toastIcon = document.getElementById('toastIcon');
 const toastTitle = document.getElementById('toastTitle');
 const toastMessage = document.getElementById('toastMessage');
+
+let articuloCombo = null;
 
 // =============================================
 //  Utilities
@@ -137,14 +140,20 @@ async function loadArticulos() {
         if (!res.ok) throw new Error('Error al cargar artículos');
         allArticulos = await res.json();
 
-        // Populate dropdown
-        while (articuloSelect.options.length > 1) articuloSelect.remove(1);
-        allArticulos.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.ARTICULO;
-            opt.textContent = a.ARTICULO;
-            articuloSelect.appendChild(opt);
+    const items = allArticulos.map(a => a.ARTICULO);
+    if (!articuloCombo) {
+        articuloCombo = new SearchableCombo({
+            inputEl: articuloInput,
+            valueEl: articuloValue,
+            dropdownEl: document.getElementById('articuloDropdown'),
+            listEl: document.getElementById('articuloList'),
+            containerId: 'articuloCombobox',
+            items: items,
+            onSelect: (value) => checkDuplicateOnSelect(value)
         });
+    } else {
+        articuloCombo.setItems(items);
+    }
     } catch (err) {
         console.error('Error loading articulos:', err);
         showToast('error', 'Error', 'No se pudieron cargar los artículos');
@@ -161,16 +170,14 @@ function isDuplicateToday(articulo) {
     );
 }
 
-articuloSelect.addEventListener('change', () => {
-    const selected = articuloSelect.value;
-    if (selected && isDuplicateToday(selected)) {
-        duplicateHint.textContent = `⚠️ "${selected}" ya fue registrado hoy en ${currentUser.nombre_local}`;
-        duplicateHint.classList.add('visible');
+function checkDuplicateOnSelect(articulo) {
+    if (isDuplicateToday(articulo)) {
+        duplicateHint.textContent = `⚠️ "${articulo}" ya fue registrado hoy`;
+        duplicateHint.style.color = '#f87171';
     } else {
         duplicateHint.textContent = '';
-        duplicateHint.classList.remove('visible');
     }
-});
+}
 
 // =============================================
 //  Records
@@ -256,7 +263,7 @@ function renderRecords(records) {
 toppingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const articulo = articuloSelect.value;
+    const articulo = articuloValue.value;
     const peso = parseFloat(pesoInput.value);
 
     if (!articulo || !peso) {
@@ -287,10 +294,9 @@ toppingForm.addEventListener('submit', async (e) => {
 
         showToast('success', '¡Registrado!', `${articulo} — ${formatNumber(peso)}g`);
 
-        articuloSelect.value = '';
         pesoInput.value = '';
+        if (articuloCombo) articuloCombo.reset();
         duplicateHint.textContent = '';
-        duplicateHint.classList.remove('visible');
 
         await loadRecords();
     } catch (err) {

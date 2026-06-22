@@ -562,6 +562,20 @@ nuevoForm.addEventListener('submit', async (e) => {
 
     submitBtn.classList.add('loading');
 
+    // Check for duplicate product+destination today
+    try {
+        const today = getTodayISO();
+        const dupUrl = `${SUPABASE_URL}/rest/v1/transferencias_v2?producto=eq.${encodeURIComponent(producto)}&local_destino=eq.${encodeURIComponent(local_destino)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=id`;
+        const dupRes = await fetch(dupUrl, { headers: HEADERS });
+        const existing = await dupRes.json();
+        if (existing.length > 0) {
+            showToast('error', 'Duplicado', `"${producto}" → ${local_destino} ya fue registrado hoy`);
+            submitBtn.classList.remove('loading');
+            return;
+        }
+    } catch (e) {}
+
+
     try {
         const record = {
             producto,

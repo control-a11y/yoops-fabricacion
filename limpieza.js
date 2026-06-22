@@ -24,6 +24,9 @@ const SABOR_MAP = {
 let currentUser = null;
 let editingId = null; // UUID of the record being edited, null for new
 
+const SABORES_LIMPIEZA = ['🥛 Natural', '🟣 Taro', '⚫ Carbón', '🌱 Vegano', '🫐 Açaí'];
+let saborCombo = null;
+
 // =============================================
 //  DOM
 // =============================================
@@ -34,7 +37,8 @@ const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 
 const limpiezaForm = document.getElementById('limpiezaForm');
-const saborSelect = document.getElementById('saborSelect');
+const saborInput = document.getElementById('saborInput');
+const saborValue = document.getElementById('saborValue');
 const mezclaInicial = document.getElementById('mezclaInicial');
 const aguaInicial = document.getElementById('aguaInicial');
 const productoExtraido = document.getElementById('productoExtraido');
@@ -187,7 +191,8 @@ function enterEditMode(record) {
     editingId = record.id;
 
     // Fill form with existing data
-    saborSelect.value = record.sabor;
+    saborInput.value = record.sabor;
+    saborValue.value = record.sabor;
     mezclaInicial.value = record.mezcla_inicial ?? '';
     aguaInicial.value = record.agua_inicial ?? '';
     productoExtraido.value = record.producto_extraido ?? '';
@@ -323,10 +328,20 @@ function renderRecords(records) {
 limpiezaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const sabor = saborSelect.value;
+    const sabor = saborValue.value;
     if (!sabor) {
         showToast('error', 'Falta sabor', 'Selecciona el sabor de fabricación');
         return;
+    }
+
+    // Check for duplicate sabor today (only for new records)
+    if (!editingId) {
+        const dupCheck = todayRecords.find(r => r.sabor === sabor && r.local === currentUser.nombre_local);
+        if (dupCheck) {
+            showToast('error', 'Duplicado', `"${sabor}" ya fue registrado hoy`);
+            submitBtn.classList.remove('loading');
+            return;
+        }
     }
 
     const data = {
@@ -355,6 +370,7 @@ limpiezaForm.addEventListener('submit', async (e) => {
             await createRecord(data);
             showToast('success', '¡Registrado!', `Limpieza ${saborInfo.emoji} ${saborInfo.label} guardada`);
             limpiezaForm.reset();
+            if (saborCombo) saborCombo.reset();
         }
 
         await loadRecords();
@@ -392,6 +408,16 @@ async function init() {
     autoDate.textContent = getTodayDisplay();
 
     switchScreen('limpiezaScreen');
+
+    saborCombo = new SearchableCombo({
+        inputEl: saborInput,
+        valueEl: saborValue,
+        dropdownEl: document.getElementById('saborDropdown'),
+        listEl: document.getElementById('saborList'),
+        containerId: 'saborCombobox',
+        items: SABORES_LIMPIEZA
+    });
+
     await loadRecords();
 }
 

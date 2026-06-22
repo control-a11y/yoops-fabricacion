@@ -1,0 +1,82 @@
+/* ============================================
+   Searchable Combobox - Shared Styles
+   ============================================ */
+
+.searchable-select {
+    position: relative;
+}
+
+.searchable-select .search-icon {
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.searchable-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid rgba(120, 100, 200, 0.15);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(120, 100, 200, 0.15) transparent;
+}
+
+.searchable-dropdown.hidden { display: none; }
+
+.searchable-list { padding: 4px; }
+
+.searchable-item {
+    padding: 9px 12px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.searchable-item:hover,
+.searchable-item.highlighted {
+    background: rgba(167, 139, 250, 0.12);
+    color: var(--text-primary);
+}
+
+.searchable-item.selected {
+    background: rgba(167, 139, 250, 0.18);
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.searchable-no-results {
+    padding: 14px 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-style: italic;
+}
+
+.searchable-item mark {
+    background: rgba(167, 139, 250, 0.25);
+    color: var(--text-primary);
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+@media (max-width: 768px) {
+    .searchable-dropdown {
+        max-height: 180px;
+    }
+
+    .searchable-item {
+        padding: 10px 12px;
+        font-size: 0.84rem;
+    }
+}

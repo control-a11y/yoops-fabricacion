@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="searchable-combo.css">
 </head>
 <body>
     <!-- Animated background blobs -->
@@ -254,21 +255,18 @@
                     <form id="fabricacionForm" class="form-grid-simple">
                         <!-- Sabor -->
                         <div class="form-group">
-                            <label for="saborSelect" class="form-label">
+                            <label for="saborInput" class="form-label">
                                 <span class="label-icon">🍦</span>
                                 Sabor
                             </label>
-                            <div class="select-wrapper">
-                                <select id="saborSelect" required>
-                                    <option value="" disabled selected>Selecciona un sabor...</option>
-                                    <option value="natural">🥛 Natural</option>
-                                    <option value="taro">🟣 Taro</option>
-                                    <option value="carbon">⚫ Carbón</option>
-                                    <option value="vegano">🌱 Vegano</option>
-                                    <option value="asaid">🫐 Açaí</option>
-                                </select>
-                                <div class="select-arrow">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <div class="searchable-select" id="saborCombobox">
+                                <div class="input-wrapper">
+                                    <input type="text" id="saborInput" placeholder="Buscar sabor..." autocomplete="off">
+                                    <span class="input-suffix search-icon">🔍</span>
+                                </div>
+                                <input type="hidden" id="saborValue">
+                                <div class="searchable-dropdown hidden" id="saborDropdown">
+                                    <div class="searchable-list" id="saborList"></div>
                                 </div>
                             </div>
                         </div>
@@ -347,6 +345,7 @@
         </div>
     </div>
 
+    <script src="searchable-combo.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
