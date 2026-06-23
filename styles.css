@@ -1367,3 +1367,64 @@ tr:hover .btn-edit-record,
     }
 }
 
+/* --- Dashboard Card --- */
+.dashboard-card {
+    background: rgba(167, 139, 250, 0.03);
+    border: 1px solid rgba(167, 139, 250, 0.12);
+    margin-bottom: 20px;
+}
+
+.badge-inventory {
+    color: var(--accent-pink) !important;
+    background: rgba(244, 114, 182, 0.1) !important;
+    border-color: rgba(244, 114, 182, 0.2) !important;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.dashboard-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: rgba(18, 18, 28, 0.5);
+    border: 1px solid rgba(167, 139, 250, 0.08);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.dashboard-item:hover {
+    border-color: rgba(167, 139, 250, 0.2);
+    background: rgba(167, 139, 250, 0.05);
+}
+
+.dashboard-sabor {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.dashboard-peso {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.dashboard-loading,
+.dashboard-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+

@@ -71,6 +71,8 @@ const displayUserLocal = document.getElementById('displayUserLocal');
 const logoutBtn = document.getElementById('logoutBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const submitBtnText = document.getElementById('submitBtnText');
+const dashboardCard = document.getElementById('dashboardCard');
+const dashboardGrid = document.getElementById('dashboardGrid');
 
 // Toast is now handled by utils.js showToast()
 
@@ -268,11 +270,13 @@ function enterApp(user) {
     if (isLab) {
         if (formCard) formCard.style.display = 'none';
         if (recordsSection) recordsSection.style.display = 'none';
+        if (dashboardCard) dashboardCard.style.display = 'none';
         if (navTopping) navTopping.style.display = 'none';
         if (navLimpieza) navLimpieza.style.display = 'none';
     } else {
         if (formCard) formCard.style.display = '';
         if (recordsSection) recordsSection.style.display = '';
+        if (dashboardCard) dashboardCard.style.display = '';
         if (navTopping) navTopping.style.display = '';
         if (navLimpieza) navLimpieza.style.display = '';
     }
@@ -289,7 +293,10 @@ function enterApp(user) {
         });
     }
 
-    if (!isLab) loadRecords();
+    if (!isLab) {
+        loadRecords();
+        loadDashboard(user.nombre_local);
+    }
 }
 
 // --- Login Form ---
@@ -434,6 +441,67 @@ async function loadRecords() {
     } catch (err) {
         console.error('Error loading records:', err);
         showToast('error', 'Error', 'No se pudieron cargar los registros');
+    }
+}
+
+async function loadDashboard(localName) {
+    if (!dashboardGrid) return;
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/limpieza_v2?local=eq.${encodeURIComponent(localName)}&order=fecha.desc,hora.desc`,
+            { headers: HEADERS }
+        );
+        if (!res.ok) throw new Error('Error al cargar inventario');
+        const cleanings = await res.json();
+
+        // Get the latest record for each flavor
+        const latestBySabor = {};
+        cleanings.forEach(c => {
+            if (!latestBySabor[c.sabor]) {
+                latestBySabor[c.sabor] = c;
+            }
+        });
+
+        // Render each flavor in SABOR_MAP
+        dashboardGrid.innerHTML = '';
+        
+        let hasData = false;
+        Object.entries(SABOR_MAP).forEach(([key, info]) => {
+            const cleaning = latestBySabor[key];
+            if (cleaning) {
+                hasData = true;
+                const ext = parseFloat(cleaning.producto_extraido) || 0;
+                const final = parseFloat(cleaning.mezcla_final) || 0;
+                const total = ext + final;
+
+                const item = document.createElement('div');
+                item.className = 'dashboard-item';
+                item.innerHTML = `
+                    <span style="font-size: 1.5rem;">${escapeHtml(info.emoji)}</span>
+                    <span class="dashboard-sabor">${escapeHtml(info.label)}</span>
+                    <span class="dashboard-peso">${formatNumber(total)} g</span>
+                `;
+                dashboardGrid.appendChild(item);
+            } else {
+                const item = document.createElement('div');
+                item.className = 'dashboard-item';
+                item.style.opacity = '0.5';
+                item.innerHTML = `
+                    <span style="font-size: 1.5rem;">${escapeHtml(info.emoji)}</span>
+                    <span class="dashboard-sabor">${escapeHtml(info.label)}</span>
+                    <span class="dashboard-peso" style="color: var(--text-muted);">0 g</span>
+                `;
+                dashboardGrid.appendChild(item);
+            }
+        });
+
+        if (!hasData) {
+            dashboardGrid.innerHTML = '<div class="dashboard-empty">No hay registros de limpieza previos para este local</div>';
+        }
+
+    } catch (err) {
+        console.error('Error loading dashboard:', err);
+        dashboardGrid.innerHTML = '<div class="dashboard-empty">⚠️ Error al cargar el inventario del comienzo del día</div>';
     }
 }
 
@@ -589,6 +657,9 @@ fabricacionForm.addEventListener('submit', async (e) => {
 refreshBtn.addEventListener('click', async () => {
     refreshBtn.classList.add('spinning');
     await loadRecords();
+    if (currentUser && currentUser.nombre_local !== 'Laboratorio') {
+        await loadDashboard(currentUser.nombre_local);
+    }
     setTimeout(() => refreshBtn.classList.remove('spinning'), 600);
 });
 
