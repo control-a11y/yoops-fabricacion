@@ -275,7 +275,9 @@ toppingForm.addEventListener('submit', async (e) => {
                 articulo,
                 peso,
                 local: currentUser.nombre_local,
-                creado_por: currentUser.usuario
+                creado_por: currentUser.usuario,
+                fecha: getTodayISO(),
+                hora: getLocalTime()
             });
             showToast('success', '¡Registrado!', `${articulo} — ${formatNumber(peso)}g`);
             pesoInput.value = '';

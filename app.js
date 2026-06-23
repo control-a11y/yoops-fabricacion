@@ -507,7 +507,6 @@ function renderRecords(records) {
 
         const isToday = record.fecha === getTodayISO();
         tr.innerHTML = `
-            <td><span class="id-badge" title="${escapeHtml(displayId)}">${escapeHtml(displayId)}</span></td>
             <td>
                 <span class="sabor-badge sabor-${escapeHtml(record.sabor)}">
                     ${escapeHtml(saborInfo.emoji)} ${escapeHtml(saborInfo.label)}
@@ -580,7 +579,9 @@ fabricacionForm.addEventListener('submit', async (e) => {
                 sabor,
                 cantidad,
                 local: currentUser.nombre_local,
-                creado_por: currentUser.usuario
+                creado_por: currentUser.usuario,
+                fecha: getTodayISO(),
+                hora: getLocalTime()
             };
             await createRecord(data);
             const saborInfo = SABOR_MAP[sabor] || { emoji: '\ud83c\udf66', label: sabor, code: 'UNK' };

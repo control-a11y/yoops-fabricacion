@@ -287,6 +287,8 @@ limpiezaForm.addEventListener('submit', async (e) => {
             // CREATE new record
             data.local = currentUser.nombre_local;
             data.creado_por = currentUser.usuario;
+            data.fecha = getTodayISO();
+            data.hora = getLocalTime();
             await createRecord(data);
             showToast('success', '¡Registrado!', `Limpieza ${saborInfo.emoji} ${saborInfo.label} guardada`);
             limpiezaForm.reset();

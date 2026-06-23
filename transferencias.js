@@ -232,15 +232,22 @@ function setupRoleUI() {
 
 async function loadRecords() {
     try {
-        const today = getTodayISO();
+        // Calculate UTC start and end timestamps representing today in local time
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const startISO = startOfDay.toISOString();
+        const endISO = endOfDay.toISOString();
         let url;
 
         if (isLab) {
             // Lab sees ALL transfers of today
-            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${startISO}&created_at=lt.${endISO}&select=*&order=created_at.desc`;
         } else {
             // Store sees only transfers TO their local
-            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(currentUser.nombre_local)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=*&order=created_at.desc`;
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?local_destino=eq.${encodeURIComponent(currentUser.nombre_local)}&created_at=gte.${startISO}&created_at=lt.${endISO}&select=*&order=created_at.desc`;
         }
 
         const res = await fetch(url, { headers: HEADERS });
@@ -317,9 +324,10 @@ function renderRecords(records) {
 
 function canEditTransfer(record) {
     if (!record.created_at) return false;
-    const createdDate = record.created_at.slice(0, 10);
+    const d = new Date(record.created_at);
+    const createdLocalDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const today = getTodayISO();
-    return createdDate === today && record.creado_por === currentUser.usuario;
+    return createdLocalDate === today && record.creado_por === currentUser.usuario;
 }
 
 function createRecordCard(r, idx) {
