@@ -9,6 +9,8 @@ let currentUser = null;
 let isLab = false;       // true = Laboratorio (producción)
 let allArticulos = [];
 let selectedRecord = null;
+let editingTransferId = null;
+let allRecords = [];
 let highlightedIdx = -1;
 
 // =============================================
@@ -280,6 +282,7 @@ function updateAlert(records) {
 // =============================================
 
 function renderRecords(records) {
+    allRecords = records;
     recordsList.innerHTML = '';
 
     if (records.length === 0) {
@@ -301,6 +304,22 @@ function renderRecords(records) {
     });
 
     sorted.forEach((r, idx) => recordsList.appendChild(createRecordCard(r, idx)));
+
+    // Attach edit-transfer listeners
+    document.querySelectorAll('.btn-edit-transfer').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const record = allRecords.find(r => String(r.id) === id);
+            if (record) enterEditTransfer(record);
+        });
+    });
+}
+
+function canEditTransfer(record) {
+    if (!record.created_at) return false;
+    const createdDate = record.created_at.slice(0, 10);
+    const today = getTodayISO();
+    return createdDate === today && record.creado_por === currentUser.usuario;
 }
 
 function createRecordCard(r, idx) {
@@ -385,7 +404,10 @@ function createRecordCard(r, idx) {
                 <span>👤 ${escapeHtml(r.creado_por)}</span>
                 <span>🕐 ${formatDateTime(r.created_at)}</span>
             </div>
-            ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
+            <div class="transfer-actions">
+                ${canEditTransfer(r) ? `<button class="btn-edit-transfer" data-id="${r.id}" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+                ${needsMine ? `<button class="btn-add-weight" data-id="${r.id}">+ Agregar peso</button>` : ''}
+            </div>
         </div>
     `;
 
@@ -474,6 +496,36 @@ confirmModal.addEventListener('click', async () => {
 });
 
 // =============================================
+//  Edit Transfer (same-day)
+// =============================================
+
+function enterEditTransfer(record) {
+    editingTransferId = record.id;
+    productoInput.value = record.producto;
+    productoValue.value = record.producto;
+    if (isLab && destinoSelect) {
+        destinoSelect.value = record.local_destino;
+    }
+    pesoInput.value = isLab ? (record.transferencia || '') : (record.recepcion || '');
+    document.getElementById('submitBtnText').textContent = 'Guardar Cambios';
+    document.getElementById('cancelEditBtn').classList.remove('hidden');
+    nuevoForm.closest('.card').classList.add('editing');
+    nuevoForm.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitEditTransfer() {
+    editingTransferId = null;
+    nuevoForm.reset();
+    productoInput.value = '';
+    productoValue.value = '';
+    document.getElementById('submitBtnText').textContent = isLab ? 'Registrar Transferencia' : 'Registrar Recepción';
+    document.getElementById('cancelEditBtn').classList.add('hidden');
+    nuevoForm.closest('.card').classList.remove('editing');
+}
+
+document.getElementById('cancelEditBtn').addEventListener('click', exitEditTransfer);
+
+// =============================================
 //  New Record Form
 // =============================================
 
@@ -492,64 +544,90 @@ nuevoForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    let local_destino;
+    let destino;
     if (isLab) {
-        local_destino = destinoSelect.value;
-        if (!local_destino) {
+        destino = destinoSelect.value;
+        if (!destino) {
             showToast('error', 'Destino requerido', 'Selecciona el local de destino');
             return;
         }
     } else {
-        local_destino = currentUser.nombre_local;
+        destino = currentUser.nombre_local;
     }
+    const local_destino = destino;
 
     submitBtn.classList.add('loading');
 
-    // Check for duplicate product+destination today
-    try {
-        const today = getTodayISO();
-        const dupUrl = `${SUPABASE_URL}/rest/v1/transferencias_v2?producto=eq.${encodeURIComponent(producto)}&local_destino=eq.${encodeURIComponent(local_destino)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=id`;
-        const dupRes = await fetch(dupUrl, { headers: HEADERS });
-        const existing = await dupRes.json();
-        if (existing.length > 0) {
-            showToast('error', 'Duplicado', `"${producto}" → ${local_destino} ya fue registrado hoy`);
+    if (editingTransferId) {
+        // ---- EDIT MODE ----
+        try {
+            const updateData = { producto };
+            if (isLab) {
+                updateData.transferencia = peso;
+                updateData.local_destino = destino;
+            } else {
+                updateData.recepcion = peso;
+            }
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/transferencias_v2?id=eq.${editingTransferId}`,
+                { method: 'PATCH', headers: HEADERS, body: JSON.stringify(updateData) }
+            );
+            if (!res.ok) throw new Error('Error al actualizar');
+            showToast('success', '¡Actualizado!', `${producto} actualizado`);
+            exitEditTransfer();
+            await loadRecords();
+        } catch (err) {
+            showToast('error', 'Error', 'No se pudo actualizar el registro');
+        } finally {
             submitBtn.classList.remove('loading');
-            return;
         }
-    } catch (e) {}
+    } else {
+        // ---- CREATE MODE ----
+        // Check for duplicate product+destination today
+        try {
+            const today = getTodayISO();
+            const dupUrl = `${SUPABASE_URL}/rest/v1/transferencias_v2?producto=eq.${encodeURIComponent(producto)}&local_destino=eq.${encodeURIComponent(local_destino)}&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59&select=id`;
+            const dupRes = await fetch(dupUrl, { headers: HEADERS });
+            const existing = await dupRes.json();
+            if (existing.length > 0) {
+                showToast('error', 'Duplicado', `"${producto}" → ${local_destino} ya fue registrado hoy`);
+                submitBtn.classList.remove('loading');
+                return;
+            }
+        } catch (e) {}
 
+        try {
+            const record = {
+                producto,
+                local_destino,
+                creado_por: currentUser.usuario,
+                creado_por_rol: isLab ? 'produccion' : 'tienda',
+                estado: 'pendiente'
+            };
 
-    try {
-        const record = {
-            producto,
-            local_destino,
-            creado_por: currentUser.usuario,
-            creado_por_rol: isLab ? 'produccion' : 'tienda',
-            estado: 'pendiente'
-        };
+            if (isLab) {
+                record.transferencia = peso;
+                // recepcion = null → store must confirm
+            } else {
+                record.recepcion = peso;
+                // transferencia = null → lab must register what they sent
+            }
 
-        if (isLab) {
-            record.transferencia = peso;
-            // recepcion = null → store must confirm
-        } else {
-            record.recepcion = peso;
-            // transferencia = null → lab must register what they sent
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/transferencias_v2`,
+                { method: 'POST', headers: HEADERS, body: JSON.stringify(record) }
+            );
+            if (!res.ok) throw new Error('fail');
+
+            showToast('success', '¡Registrado!', `${producto} → ${local_destino}`);
+            nuevoForm.reset();
+            productoValue.value = '';
+            await loadRecords();
+        } catch (err) {
+            showToast('error', 'Error', 'No se pudo crear el registro');
+        } finally {
+            submitBtn.classList.remove('loading');
         }
-
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/transferencias_v2`,
-            { method: 'POST', headers: HEADERS, body: JSON.stringify(record) }
-        );
-        if (!res.ok) throw new Error('fail');
-
-        showToast('success', '¡Registrado!', `${producto} → ${local_destino}`);
-        nuevoForm.reset();
-        productoValue.value = '';
-        await loadRecords();
-    } catch (err) {
-        showToast('error', 'Error', 'No se pudo crear el registro');
-    } finally {
-        submitBtn.classList.remove('loading');
     }
 });
 

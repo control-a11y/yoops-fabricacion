@@ -5,6 +5,7 @@
    ============================================ */
 
 let saborCombo = null;
+let editingId = null;
 
 // --- Local code mapping ---
 const LOCAL_CODE_MAP = {
@@ -68,6 +69,8 @@ const todayCount = document.getElementById('todayCount');
 const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 const logoutBtn = document.getElementById('logoutBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const submitBtnText = document.getElementById('submitBtnText');
 
 // Toast is now handled by utils.js showToast()
 
@@ -447,6 +450,43 @@ async function createRecord(data) {
     return res.json();
 }
 
+async function updateRecord(id, data) {
+    const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?id=eq.${id}`,
+        { method: 'PATCH', headers: HEADERS, body: JSON.stringify(data) }
+    );
+    if (!res.ok) {
+        const errorBody = await res.text();
+        console.error('Update error:', errorBody);
+        throw new Error('Error al actualizar registro');
+    }
+    return res.json();
+}
+
+function enterEditMode(record) {
+    editingId = record.id;
+    const saborInfo = SABOR_MAP[record.sabor];
+    const display = saborInfo ? `${saborInfo.emoji} ${saborInfo.label}` : record.sabor;
+    saborInput.value = display;
+    saborValue.value = display;
+    pesoInput.value = record.cantidad;
+    submitBtnText.textContent = 'Guardar Cambios';
+    cancelEditBtn.classList.remove('hidden');
+    document.querySelector('.form-card').classList.add('editing');
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitEditMode() {
+    editingId = null;
+    fabricacionForm.reset();
+    if (saborCombo) saborCombo.reset();
+    submitBtnText.textContent = 'Registrar Fabricación';
+    cancelEditBtn.classList.add('hidden');
+    document.querySelector('.form-card').classList.remove('editing');
+}
+
+cancelEditBtn.addEventListener('click', exitEditMode);
+
 function renderRecords(records) {
     recordsBody.innerHTML = '';
 
@@ -465,6 +505,7 @@ function renderRecords(records) {
         const saborInfo = SABOR_MAP[record.sabor] || { emoji: '🍦', label: record.sabor };
         const displayId = record.id_fab || '—';
 
+        const isToday = record.fecha === getTodayISO();
         tr.innerHTML = `
             <td><span class="id-badge" title="${escapeHtml(displayId)}">${escapeHtml(displayId)}</span></td>
             <td>
@@ -473,10 +514,19 @@ function renderRecords(records) {
                 </span>
             </td>
             <td><span class="peso-value">${formatNumber(record.cantidad)}</span></td>
-            <td>${escapeHtml(record.creado_por) || '—'}</td>
+            <td>${escapeHtml(record.creado_por) || '\u2014'}</td>
             <td><span class="hora-value">${formatTime(record.hora)}</span></td>
+            <td>${isToday ? `<button class="btn-edit-record" data-idx="${index}" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}</td>
         `;
+        tr._recordData = record;
         recordsBody.appendChild(tr);
+    });
+
+    // Attach edit listeners
+    recordsBody.querySelectorAll('.btn-edit-record').forEach(btn => {
+        const idx = parseInt(btn.dataset.idx);
+        const tr = btn.closest('tr');
+        btn.addEventListener('click', () => enterEditMode(tr._recordData));
     });
 }
 
@@ -493,6 +543,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    if (!editingId) {
         // Check for duplicate sabor today
         const today = getTodayISO();
         try {
@@ -507,6 +558,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
                 return;
             }
         } catch (e) { console.error('Duplicate check failed:', e); }
+    }
 
     if (cantidad <= 0) {
         showToast('error', 'Peso inválido', 'El peso debe ser mayor a 0');
@@ -516,25 +568,27 @@ fabricacionForm.addEventListener('submit', async (e) => {
     submitBtn.classList.add('loading');
 
     try {
-        // Generate the custom ID
-        const id_fab = await generateFabId(currentUser.nombre_local, sabor);
-
-        const data = {
-            id_fab,
-            sabor,
-            cantidad,
-            local: currentUser.nombre_local,
-            creado_por: currentUser.usuario
-        };
-
-        await createRecord(data);
-
-        const saborInfo = SABOR_MAP[sabor] || { emoji: '🍦', label: sabor, code: 'UNK' };
-        showToast('success', '¡Registrado!', `${id_fab} — ${saborInfo.emoji} ${formatNumber(cantidad)}g`);
-
-        if (saborCombo) saborCombo.reset();
-        pesoInput.value = '';
-        pesoInput.focus();
+        if (editingId) {
+            await updateRecord(editingId, { sabor, cantidad });
+            const saborInfo = SABOR_MAP[sabor] || { emoji: '\ud83c\udf66', label: sabor, code: 'UNK' };
+            showToast('success', '¡Actualizado!', `${saborInfo.emoji} ${formatNumber(cantidad)}g`);
+            exitEditMode();
+        } else {
+            const id_fab = await generateFabId(currentUser.nombre_local, sabor);
+            const data = {
+                id_fab,
+                sabor,
+                cantidad,
+                local: currentUser.nombre_local,
+                creado_por: currentUser.usuario
+            };
+            await createRecord(data);
+            const saborInfo = SABOR_MAP[sabor] || { emoji: '\ud83c\udf66', label: sabor, code: 'UNK' };
+            showToast('success', '¡Registrado!', `${id_fab} \u2014 ${saborInfo.emoji} ${formatNumber(cantidad)}g`);
+            if (saborCombo) saborCombo.reset();
+            pesoInput.value = '';
+            pesoInput.focus();
+        }
 
         await loadRecords();
     } catch (err) {

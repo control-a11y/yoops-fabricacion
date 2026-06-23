@@ -116,8 +116,9 @@
 
                     <!-- Submit -->
                     <div class="form-actions">
+                        <button type="button" class="btn-cancel-edit hidden" id="cancelEditBtn">Cancelar</button>
                         <button type="submit" class="btn-submit btn-topping" id="submitBtn">
-                            <span class="btn-text">Registrar Consumo</span>
+                            <span class="btn-text" id="submitBtnText">Registrar Consumo</span>
                             <span class="btn-loader" id="btnLoader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
                             <span class="btn-icon">→</span>
                         </button>
@@ -152,6 +153,7 @@
                                 <th>Peso (g)</th>
                                 <th>Creado por</th>
                                 <th>Hora</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="recordsBody"></tbody>

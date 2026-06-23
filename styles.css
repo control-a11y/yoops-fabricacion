@@ -1301,3 +1301,69 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.2); border-radius: 100px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.35); }
+
+/* --- Shared: Edit Record Button --- */
+.btn-edit-record {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(167, 139, 250, 0.08);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    opacity: 0.4;
+    vertical-align: middle;
+}
+
+.btn-edit-record:hover {
+    background: rgba(167, 139, 250, 0.2);
+    color: var(--accent-purple);
+    border-color: rgba(167, 139, 250, 0.35);
+    opacity: 1;
+}
+
+tr:hover .btn-edit-record,
+.record-card:hover .btn-edit-record {
+    opacity: 1;
+}
+
+/* --- Shared: Cancel Edit Button --- */
+.btn-cancel-edit {
+    padding: 12px 20px;
+    background: rgba(120, 100, 200, 0.08);
+    border: 1px solid rgba(120, 100, 200, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-cancel-edit:hover {
+    background: rgba(120, 100, 200, 0.15);
+    color: var(--text-primary);
+}
+
+.btn-cancel-edit.hidden {
+    display: none;
+}
+
+/* --- Shared: Form Editing Mode Highlight --- */
+.form-card.editing,
+.card.editing {
+    border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.08);
+}
+
+@media (max-width: 768px) {
+    .btn-edit-record {
+        opacity: 1;
+    }
+}
+

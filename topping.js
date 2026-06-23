@@ -11,6 +11,7 @@
 let currentUser = null;
 let allArticulos = [];
 let todayRecords = []; // Cached for duplicate check
+let editingId = null;
 
 // =============================================
 //  DOM Elements
@@ -38,8 +39,8 @@ const emptyState = document.getElementById('emptyState');
 const recordsTable = document.getElementById('recordsTable');
 const refreshBtn = document.getElementById('refreshBtn');
 const todayCount = document.getElementById('todayCount');
-
-
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const submitBtnText = document.getElementById('submitBtnText');
 
 let articuloCombo = null;
 
@@ -143,6 +144,49 @@ async function createRecord(data) {
     return res.json();
 }
 
+async function updateRecord(id, data) {
+    const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/consumo_topping_v2?id=eq.${id}`,
+        { method: 'PATCH', headers: HEADERS, body: JSON.stringify(data) }
+    );
+    if (!res.ok) {
+        const body = await res.text();
+        console.error('Update error:', body);
+        throw new Error('Error al actualizar registro');
+    }
+    return res.json();
+}
+
+// =============================================
+//  Edit Mode
+// =============================================
+
+function enterEditMode(record) {
+    editingId = record.id;
+    articuloInput.value = record.articulo;
+    articuloValue.value = record.articulo;
+    pesoInput.value = record.peso;
+    submitBtnText.textContent = 'Guardar Cambios';
+    cancelEditBtn.classList.remove('hidden');
+    duplicateHint.textContent = '';
+    duplicateHint.classList.remove('visible');
+    document.querySelector('.form-card').classList.add('editing');
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitEditMode() {
+    editingId = null;
+    toppingForm.reset();
+    if (articuloCombo) articuloCombo.reset();
+    submitBtnText.textContent = 'Registrar Consumo';
+    cancelEditBtn.classList.add('hidden');
+    duplicateHint.textContent = '';
+    duplicateHint.classList.remove('visible');
+    document.querySelector('.form-card').classList.remove('editing');
+}
+
+cancelEditBtn.addEventListener('click', exitEditMode);
+
 // =============================================
 //  Render
 // =============================================
@@ -173,14 +217,23 @@ function renderRecords(records) {
             tagHtml = `<span class="art-tag">${escapeHtml(tagMatch[1])}</span>`;
         }
 
+        const isToday = record.fecha === getTodayISO();
         tr.innerHTML = `
             <td><span class="row-index">${index + 1}</span></td>
             <td><span class="articulo-cell">${displayName}${tagHtml}</span></td>
             <td><span class="peso-value">${formatNumber(record.peso)}</span></td>
             <td>${escapeHtml(record.creado_por) || '—'}</td>
             <td><span class="hora-value">${formatTime(record.hora)}</span></td>
+            <td>${isToday ? `<button class="btn-edit-record" data-idx="${index}" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}</td>
         `;
+        tr._recordData = record;
         recordsBody.appendChild(tr);
+    });
+
+    // Attach edit listeners
+    recordsBody.querySelectorAll('.btn-edit-record').forEach(btn => {
+        const tr = btn.closest('tr');
+        btn.addEventListener('click', () => enterEditMode(tr._recordData));
     });
 }
 
@@ -204,8 +257,8 @@ toppingForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    // Client-side duplicate check
-    if (isDuplicateToday(articulo)) {
+    // Client-side duplicate check (skip when editing)
+    if (!editingId && isDuplicateToday(articulo)) {
         showToast('error', 'Duplicado', `"${articulo}" ya fue registrado hoy en ${currentUser.nombre_local}`);
         return;
     }
@@ -213,27 +266,31 @@ toppingForm.addEventListener('submit', async (e) => {
     submitBtn.classList.add('loading');
 
     try {
-        await createRecord({
-            articulo,
-            peso,
-            local: currentUser.nombre_local,
-            creado_por: currentUser.usuario
-        });
-
-        showToast('success', '¡Registrado!', `${articulo} — ${formatNumber(peso)}g`);
-
-        pesoInput.value = '';
-        if (articuloCombo) articuloCombo.reset();
-        duplicateHint.textContent = '';
-        duplicateHint.classList.remove('visible');
+        if (editingId) {
+            await updateRecord(editingId, { articulo, peso });
+            showToast('success', '¡Actualizado!', `${articulo} — ${formatNumber(peso)}g`);
+            exitEditMode();
+        } else {
+            await createRecord({
+                articulo,
+                peso,
+                local: currentUser.nombre_local,
+                creado_por: currentUser.usuario
+            });
+            showToast('success', '¡Registrado!', `${articulo} — ${formatNumber(peso)}g`);
+            pesoInput.value = '';
+            if (articuloCombo) articuloCombo.reset();
+            duplicateHint.textContent = '';
+            duplicateHint.classList.remove('visible');
+        }
 
         await loadRecords();
     } catch (err) {
         if (err.message === 'DUPLICADO') {
             showToast('error', 'Duplicado', `"${articulo}" ya fue registrado hoy en este local`);
         } else {
-            console.error('Error creating record:', err);
-            showToast('error', 'Error', 'No se pudo registrar. Intenta de nuevo.');
+            console.error('Error saving record:', err);
+            showToast('error', 'Error', 'No se pudo guardar. Intenta de nuevo.');
         }
     } finally {
         submitBtn.classList.remove('loading');
