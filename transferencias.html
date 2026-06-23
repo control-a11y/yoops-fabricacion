@@ -72,6 +72,23 @@
                     <span class="role-badge" id="roleBadge">—</span>
                 </div>
                 <form id="nuevoForm">
+                    <!-- Tipo de Movimiento (only for tiendas) -->
+                    <div class="form-group" id="tipoMovimientoGroup" style="display: none; margin-bottom: 16px;">
+                        <label class="form-label">
+                            <span class="label-icon">🔄</span> Tipo de Movimiento
+                        </label>
+                        <div style="display: flex; gap: 16px; margin: 4px 0 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; color: var(--text-primary);">
+                                <input type="radio" name="tipoMovimiento" value="entrada" checked style="accent-color: var(--accent-purple); cursor: pointer;">
+                                📥 Recibir (Entrada)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; color: var(--text-primary);">
+                                <input type="radio" name="tipoMovimiento" value="salida" style="accent-color: var(--accent-purple); cursor: pointer;">
+                                📤 Enviar (Salida)
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="productoInput" class="form-label">
                             <span class="label-icon">📦</span> Artículo
