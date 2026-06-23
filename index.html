@@ -212,6 +212,25 @@
                 </div>
             </header>
 
+            <!-- Dashboard: Inventario de Yogurt al Comienzo del Día -->
+            <section class="card dashboard-card" id="dashboardCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📊</span>
+                        Inventario al Comienzo del Día
+                    </h2>
+                    <div class="card-header-actions">
+                        <span class="card-badge badge-inventory">Inventario Local</span>
+                        <button class="btn-refresh" id="refreshBtn" title="Actualizar inventario">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="dashboard-grid" id="dashboardGrid">
+                    <div class="dashboard-loading">Cargando inventario...</div>
+                </div>
+            </section>
+
             <!-- Admin Nav (only visible for admins) -->
             <nav class="admin-nav hidden" id="adminNav">
                 <a href="articulos.html" class="admin-nav-link">
@@ -223,6 +242,11 @@
 
             <!-- General Nav -->
             <nav class="general-nav" id="generalNav">
+                <a href="fabricacion.html" class="general-nav-link nav-link-pink" id="navFabricacion">
+                    <span class="nav-link-icon">🥣</span>
+                    <span>Fabricación de Yogurt</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
                 <a href="topping.html" class="general-nav-link nav-link-orange" id="navTopping">
                     <span class="nav-link-icon">🧁</span>
                     <span>Consumo de Topping</span>
@@ -239,115 +263,6 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </a>
             </nav>
-
-            <!-- Main Content -->
-            <main class="main-content">
-                <!-- Dashboard: Inventario de Yogurt al Comienzo del Día -->
-                <section class="card dashboard-card" id="dashboardCard">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📊</span>
-                            Inventario al Comienzo del Día
-                        </h2>
-                        <span class="card-badge badge-inventory">Inventario Local</span>
-                    </div>
-                    <div class="dashboard-grid" id="dashboardGrid">
-                        <div class="dashboard-loading">Cargando inventario...</div>
-                    </div>
-                </section>
-
-                <!-- Form Card -->
-                <section class="card form-card" id="formCard">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">🥣</span>
-                            Nuevo Registro
-                        </h2>
-                        <span class="card-badge">Fabricación</span>
-                    </div>
-
-                    <form id="fabricacionForm" class="form-grid-simple">
-                        <!-- Sabor -->
-                        <div class="form-group">
-                            <label for="saborInput" class="form-label">
-                                <span class="label-icon">🍦</span>
-                                Sabor
-                            </label>
-                            <div class="searchable-select" id="saborCombobox">
-                                <div class="input-wrapper">
-                                    <input type="text" id="saborInput" placeholder="Buscar sabor..." autocomplete="off">
-                                    <span class="input-suffix search-icon">🔍</span>
-                                </div>
-                                <input type="hidden" id="saborValue">
-                                <div class="searchable-dropdown hidden" id="saborDropdown">
-                                    <div class="searchable-list" id="saborList"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Peso -->
-                        <div class="form-group">
-                            <label for="pesoInput" class="form-label">
-                                <span class="label-icon">⚖️</span>
-                                Peso (gramos)
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="number" id="pesoInput" placeholder="Ej: 5000" min="1" step="1" required>
-                                <span class="input-suffix">g</span>
-                            </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="form-actions">
-                            <button type="button" class="btn-cancel-edit hidden" id="cancelEditBtn">Cancelar</button>
-                            <button type="submit" class="btn-submit" id="submitBtn">
-                                <span class="btn-text" id="submitBtnText">Registrar Fabricación</span>
-                                <span class="btn-loader" id="btnLoader"><svg class="spinner" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40" stroke-dashoffset="10" stroke-linecap="round"/></svg></span>
-                                <span class="btn-icon">→</span>
-                            </button>
-                        </div>
-                    </form>
-                </section>
-
-                <!-- Records Table -->
-                <section class="card records-card" id="recordsSection">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📋</span>
-                            Registros de Hoy
-                        </h2>
-                        <div class="card-header-actions">
-                            <div class="stat-chip">
-                                <span class="stat-dot stat-dot-green"></span>
-                                <span id="todayCount">0</span> registros
-                            </div>
-                            <button class="btn-refresh" id="refreshBtn" title="Actualizar registros">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C10.2091 2 12.1182 3.27477 13.0645 5.14286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 5H13.5V1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="table-container">
-                        <table class="records-table" id="recordsTable">
-                            <thead>
-                                <tr>
-                                    <th>Sabor</th>
-                                    <th>Peso (g)</th>
-                                    <th>Creado por</th>
-                                    <th>Hora</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="recordsBody"></tbody>
-                        </table>
-                        <div class="empty-state" id="emptyState">
-                            <div class="empty-icon">🫗</div>
-                            <p class="empty-text">No hay registros aún</p>
-                            <p class="empty-sub">Crea tu primer registro de fabricación</p>
-                        </div>
-                    </div>
-                </section>
-            </main>
         </div>
 
         <!-- Toast Notification -->
@@ -360,9 +275,9 @@
         </div>
     </div>
 
-    <script src="config.js?v=5"></script>
-    <script src="utils.js?v=5"></script>
-    <script src="searchable-combo.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+    <script src="config.js?v=6"></script>
+    <script src="utils.js?v=6"></script>
+    <script src="searchable-combo.js?v=6"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>

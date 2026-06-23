@@ -1,19 +1,7 @@
 /* ============================================
-   YOOPS - Fabricación de Yogurt
-   Application Logic with Auth + Custom IDs
-   (config.js + utils.js loaded before this file)
+   YOOPS - Panel Principal (Hub & Auth)
+   Application Logic with Auth + Dashboard
    ============================================ */
-
-let saborCombo = null;
-let editingId = null;
-
-// --- Local code mapping ---
-const LOCAL_CODE_MAP = {
-    'Plaza Numa':      'PN',
-    'Grand Plaza':     'GP',
-    'Rio de Piedras':  'RP',
-    'Laboratorio':     'LAB'
-};
 
 // --- Known locales from the DB ---
 let LOCALES = [];
@@ -56,89 +44,20 @@ const selectLocalError = document.getElementById('selectLocalError');
 const selectLocalUserName = document.getElementById('selectLocalUserName');
 
 // App
-const fabricacionForm = document.getElementById('fabricacionForm');
-const saborInput = document.getElementById('saborInput');
-const saborValue = document.getElementById('saborValue');
-const pesoInput = document.getElementById('pesoInput');
-const submitBtn = document.getElementById('submitBtn');
-const recordsBody = document.getElementById('recordsBody');
-const emptyState = document.getElementById('emptyState');
-const recordsTable = document.getElementById('recordsTable');
-const refreshBtn = document.getElementById('refreshBtn');
-const todayCount = document.getElementById('todayCount');
 const displayUserName = document.getElementById('displayUserName');
 const displayUserLocal = document.getElementById('displayUserLocal');
 const logoutBtn = document.getElementById('logoutBtn');
-const cancelEditBtn = document.getElementById('cancelEditBtn');
-const submitBtnText = document.getElementById('submitBtnText');
+const refreshBtn = document.getElementById('refreshBtn');
 const dashboardCard = document.getElementById('dashboardCard');
 const dashboardGrid = document.getElementById('dashboardGrid');
 
-// Toast is now handled by utils.js showToast()
-
 // =============================================
-//  Utility Functions (shared ones in utils.js)
+//  Utility Functions
 // =============================================
 
 function switchScreen(screenId) {
     [loginScreen, registerScreen, selectLocalScreen, appScreen].forEach(s => s.classList.add('hidden'));
     document.getElementById(screenId).classList.remove('hidden');
-}
-
-// =============================================
-//  ID Generation: FAB-{LOCAL}-{SABOR}-{DDMMYY}-{SEQ}
-// =============================================
-
-/**
- * Get the local code from the local name
- */
-function getLocalCode(localName) {
-    return LOCAL_CODE_MAP[localName] || localName.substring(0, 2).toUpperCase();
-}
-
-/**
- * Get the sabor code
- */
-function getSaborCode(sabor) {
-    const info = SABOR_MAP[sabor];
-    return info ? info.code : sabor.substring(0, 3).toUpperCase();
-}
-
-/**
- * Generate the next sequential ID for a given local + sabor + date
- * Queries existing records to find the next number
- */
-async function generateFabId(localName, sabor) {
-    const localCode = getLocalCode(localName);
-    const saborCode = getSaborCode(sabor);
-    const dateStr = getDateDDMMYY();
-
-    // The prefix to search for: FAB-PN-NAT-190626
-    const prefix = `FAB-${localCode}-${saborCode}-${dateStr}`;
-
-    // Query existing records with this prefix to find the max sequence number
-    try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?id_fab=like.${encodeURIComponent(prefix + '%')}&select=id_fab&order=id_fab.desc&limit=1`,
-            { headers: HEADERS }
-        );
-
-        if (res.ok) {
-            const records = await res.json();
-            if (records.length > 0 && records[0].id_fab) {
-                // Extract the sequence number from the last ID
-                const lastId = records[0].id_fab;
-                const parts = lastId.split('-');
-                const lastSeq = parseInt(parts[parts.length - 1], 10) || 0;
-                return `${prefix}-${String(lastSeq + 1).padStart(2, '0')}`;
-            }
-        }
-    } catch (e) {
-        console.error('Error querying for next ID:', e);
-    }
-
-    // First record with this prefix
-    return `${prefix}-01`;
 }
 
 // =============================================
@@ -260,41 +179,25 @@ function enterApp(user) {
         adminNav.classList.add('hidden');
     }
 
-    // Laboratorio: ocultar vistas de tienda (fabricación, topping, limpieza)
+    // Ocultar/Mostrar elementos según rol
     const isLab = user.nombre_local === 'Laboratorio';
-    const formCard = document.getElementById('formCard');
-    const recordsSection = document.getElementById('recordsSection');
+    const navFabricacion = document.getElementById('navFabricacion');
     const navTopping = document.getElementById('navTopping');
     const navLimpieza = document.getElementById('navLimpieza');
 
     if (isLab) {
-        if (formCard) formCard.style.display = 'none';
-        if (recordsSection) recordsSection.style.display = 'none';
         if (dashboardCard) dashboardCard.style.display = 'none';
+        if (navFabricacion) navFabricacion.style.display = 'none';
         if (navTopping) navTopping.style.display = 'none';
         if (navLimpieza) navLimpieza.style.display = 'none';
     } else {
-        if (formCard) formCard.style.display = '';
-        if (recordsSection) recordsSection.style.display = '';
         if (dashboardCard) dashboardCard.style.display = '';
+        if (navFabricacion) navFabricacion.style.display = '';
         if (navTopping) navTopping.style.display = '';
         if (navLimpieza) navLimpieza.style.display = '';
     }
 
-    // Initialize sabor combobox
-    if (!isLab && !saborCombo) {
-        saborCombo = new SearchableCombo({
-            inputEl: saborInput,
-            valueEl: saborValue,
-            dropdownEl: document.getElementById('saborDropdown'),
-            listEl: document.getElementById('saborList'),
-            containerId: 'saborCombobox',
-            items: SABORES_DISPLAY
-        });
-    }
-
     if (!isLab) {
-        loadRecords();
         loadDashboard(user.nombre_local);
     }
 }
@@ -424,25 +327,8 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // =============================================
-//  Fabrication Records
+//  Dashboard
 // =============================================
-
-async function loadRecords() {
-    try {
-        const today = getTodayISO();
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?fecha=eq.${today}&select=*&order=created_at.desc`,
-            { headers: HEADERS }
-        );
-        if (!res.ok) throw new Error('Error al cargar registros');
-        const records = await res.json();
-        renderRecords(records);
-        todayCount.textContent = records.length;
-    } catch (err) {
-        console.error('Error loading records:', err);
-        showToast('error', 'Error', 'No se pudieron cargar los registros');
-    }
-}
 
 async function loadDashboard(localName) {
     if (!dashboardGrid) return;
@@ -505,158 +391,9 @@ async function loadDashboard(localName) {
     }
 }
 
-async function createRecord(data) {
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/fabricacion_yogurt`,
-        { method: 'POST', headers: HEADERS, body: JSON.stringify(data) }
-    );
-    if (!res.ok) {
-        const errorBody = await res.text();
-        console.error('Supabase error:', errorBody);
-        throw new Error('Error al crear registro');
-    }
-    return res.json();
-}
-
-async function updateRecord(id, data) {
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?id=eq.${id}`,
-        { method: 'PATCH', headers: HEADERS, body: JSON.stringify(data) }
-    );
-    if (!res.ok) {
-        const errorBody = await res.text();
-        console.error('Update error:', errorBody);
-        throw new Error('Error al actualizar registro');
-    }
-    return res.json();
-}
-
-function enterEditMode(record) {
-    editingId = record.id;
-    const saborInfo = SABOR_MAP[record.sabor];
-    const display = saborInfo ? `${saborInfo.emoji} ${saborInfo.label}` : record.sabor;
-    saborInput.value = display;
-    saborValue.value = display;
-    pesoInput.value = record.cantidad;
-    submitBtnText.textContent = 'Guardar Cambios';
-    cancelEditBtn.classList.remove('hidden');
-    document.querySelector('.form-card').classList.add('editing');
-    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function exitEditMode() {
-    editingId = null;
-    fabricacionForm.reset();
-    if (saborCombo) saborCombo.reset();
-    submitBtnText.textContent = 'Registrar Fabricación';
-    cancelEditBtn.classList.add('hidden');
-    document.querySelector('.form-card').classList.remove('editing');
-}
-
-cancelEditBtn.addEventListener('click', exitEditMode);
-
-function renderRecords(records) {
-    recordsBody.innerHTML = '';
-
-    if (records.length === 0) {
-        recordsTable.style.display = 'none';
-        emptyState.classList.add('visible');
-        return;
-    }
-
-    recordsTable.style.display = 'table';
-    emptyState.classList.remove('visible');
-
-    records.forEach((record, index) => {
-        const tr = document.createElement('tr');
-        tr.style.animationDelay = `${index * 0.05}s`;
-        const saborInfo = SABOR_MAP[record.sabor] || { emoji: '🍦', label: record.sabor };
-        const displayId = record.id_fab || '—';
-
-        const isToday = record.fecha === getTodayISO();
-        tr.innerHTML = `
-            <td>
-                <span class="sabor-badge sabor-${escapeHtml(record.sabor)}">
-                    ${escapeHtml(saborInfo.emoji)} ${escapeHtml(saborInfo.label)}
-                </span>
-            </td>
-            <td><span class="peso-value">${formatNumber(record.cantidad)}</span></td>
-            <td>${escapeHtml(record.creado_por) || '\u2014'}</td>
-            <td><span class="hora-value">${formatTime(record.hora)}</span></td>
-            <td>${isToday ? `<button class="btn-edit-record" data-idx="${index}" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}</td>
-        `;
-        tr._recordData = record;
-        recordsBody.appendChild(tr);
-    });
-
-    // Attach edit listeners
-    recordsBody.querySelectorAll('.btn-edit-record').forEach(btn => {
-        const idx = parseInt(btn.dataset.idx);
-        const tr = btn.closest('tr');
-        btn.addEventListener('click', () => enterEditMode(tr._recordData));
-    });
-}
-
-// --- Fabrication Form ---
-fabricacionForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const saborDisplay = saborValue.value;
-    const sabor = SABOR_REVERSE[saborDisplay] || saborDisplay;
-    const cantidad = parseFloat(pesoInput.value);
-
-    if (!sabor || !cantidad) {
-        showToast('error', 'Campos incompletos', 'Selecciona un sabor e ingresa el peso');
-        return;
-    }
-
-
-
-    if (cantidad <= 0) {
-        showToast('error', 'Peso inválido', 'El peso debe ser mayor a 0');
-        return;
-    }
-
-    submitBtn.classList.add('loading');
-
-    try {
-        if (editingId) {
-            await updateRecord(editingId, { sabor, cantidad });
-            const saborInfo = SABOR_MAP[sabor] || { emoji: '\ud83c\udf66', label: sabor, code: 'UNK' };
-            showToast('success', '¡Actualizado!', `${saborInfo.emoji} ${formatNumber(cantidad)}g`);
-            exitEditMode();
-        } else {
-            const id_fab = await generateFabId(currentUser.nombre_local, sabor);
-            const data = {
-                id_fab,
-                sabor,
-                cantidad,
-                local: currentUser.nombre_local,
-                creado_por: currentUser.usuario,
-                fecha: getTodayISO(),
-                hora: getLocalTime()
-            };
-            await createRecord(data);
-            const saborInfo = SABOR_MAP[sabor] || { emoji: '\ud83c\udf66', label: sabor, code: 'UNK' };
-            showToast('success', '¡Registrado!', `${id_fab} \u2014 ${saborInfo.emoji} ${formatNumber(cantidad)}g`);
-            if (saborCombo) saborCombo.reset();
-            pesoInput.value = '';
-            pesoInput.focus();
-        }
-
-        await loadRecords();
-    } catch (err) {
-        console.error('Error creating record:', err);
-        showToast('error', 'Error', 'No se pudo crear el registro. Intenta de nuevo.');
-    } finally {
-        submitBtn.classList.remove('loading');
-    }
-});
-
 // --- Refresh ---
 refreshBtn.addEventListener('click', async () => {
     refreshBtn.classList.add('spinning');
-    await loadRecords();
     if (currentUser && currentUser.nombre_local !== 'Laboratorio') {
         await loadDashboard(currentUser.nombre_local);
     }
