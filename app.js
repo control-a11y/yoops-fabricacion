@@ -109,7 +109,7 @@ function getSaborCode(sabor) {
 async function generateFabId(localName, sabor) {
     const localCode = getLocalCode(localName);
     const saborCode = getSaborCode(sabor);
-    const dateStr = getDateForId();
+    const dateStr = getDateDDMMYY();
 
     // The prefix to search for: FAB-PN-NAT-190626
     const prefix = `FAB-${localCode}-${saborCode}-${dateStr}`;
