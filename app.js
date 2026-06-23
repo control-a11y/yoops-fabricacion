@@ -542,22 +542,7 @@ fabricacionForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    if (!editingId) {
-        // Check for duplicate sabor today
-        const today = getTodayISO();
-        try {
-            const dupRes = await fetch(
-                `${SUPABASE_URL}/rest/v1/fabricacion_yogurt?sabor=eq.${encodeURIComponent(sabor)}&local=eq.${encodeURIComponent(currentUser.nombre_local)}&fecha=eq.${today}&select=id`,
-                { headers: HEADERS }
-            );
-            const existing = await dupRes.json();
-            if (existing.length > 0) {
-                showToast('error', 'Duplicado', `"${sabor}" ya fue registrado hoy`);
 
-                return;
-            }
-        } catch (e) { console.error('Duplicate check failed:', e); }
-    }
 
     if (cantidad <= 0) {
         showToast('error', 'Peso inválido', 'El peso debe ser mayor a 0');
