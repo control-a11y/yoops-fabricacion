@@ -60,7 +60,7 @@ async function loadRecords() {
     try {
         const today = getTodayISO();
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/limpieza_v2?fecha=eq.${today}&select=*&order=created_at.desc`,
+            `${SUPABASE_URL}/rest/v1/limpieza_v2?fecha=eq.${today}&local=eq.${encodeURIComponent(currentUser.nombre_local)}&select=*&order=created_at.desc`,
             { headers: HEADERS }
         );
         if (!res.ok) throw new Error('Error al cargar registros');
