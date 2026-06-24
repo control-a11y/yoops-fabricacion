@@ -200,6 +200,9 @@ function enterApp(user) {
     if (!isLab) {
         loadDashboard(user.nombre_local);
     }
+
+    // Check pending transfers for all users
+    checkPendingTransfers(user);
 }
 
 // --- Login Form ---
@@ -388,6 +391,73 @@ async function loadDashboard(localName) {
     } catch (err) {
         console.error('Error loading dashboard:', err);
         dashboardGrid.innerHTML = '<div class="dashboard-empty">⚠️ Error al cargar el inventario del comienzo del día</div>';
+    }
+}
+
+// =============================================
+//  Pending Transfers Badge
+// =============================================
+
+async function checkPendingTransfers(user) {
+    const badge = document.getElementById('transferPendingBadge');
+    if (!badge) return;
+
+    try {
+        const isLab = user.nombre_local === 'Laboratorio';
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        const startISO = startOfDay.toISOString();
+        const endISO = endOfDay.toISOString();
+
+        let url;
+        if (isLab) {
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?created_at=gte.${startISO}&created_at=lt.${endISO}&select=id,transferencia,local_destino,recepcion`;
+        } else {
+            // Fetch usernames of this local to detect outgoing transfers
+            let userNames = [user.usuario];
+            try {
+                const usersRes = await fetch(
+                    `${SUPABASE_URL}/rest/v1/usuarios?nombre_local=eq.${encodeURIComponent(user.nombre_local)}&select=usuario`,
+                    { headers: HEADERS }
+                );
+                if (usersRes.ok) {
+                    const localUsers = await usersRes.json();
+                    const fetched = localUsers.map(u => u.usuario).filter(Boolean);
+                    if (fetched.length > 0) userNames = fetched;
+                }
+            } catch (e) { /* silent */ }
+            const usersFilter = userNames.map(u => `"${u}"`).join(',');
+            url = `${SUPABASE_URL}/rest/v1/transferencias_v2?or=(local_destino.eq.${encodeURIComponent(user.nombre_local)},creado_por.in.(${usersFilter}))&created_at=gte.${startISO}&created_at=lt.${endISO}&select=id,transferencia,recepcion,local_destino,creado_por`;
+        }
+
+        const res = await fetch(url, { headers: HEADERS });
+        if (!res.ok) return;
+        const records = await res.json();
+
+        let pendingCount = 0;
+        records.forEach(r => {
+            const isReceiver = (user.nombre_local === r.local_destino);
+            if (isLab) {
+                if (r.transferencia == null) pendingCount++;
+            } else {
+                if (isReceiver) {
+                    if (r.recepcion == null) pendingCount++;
+                } else {
+                    if (r.transferencia == null) pendingCount++;
+                }
+            }
+        });
+
+        if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    } catch (e) {
+        console.error('Error checking pending transfers:', e);
     }
 }
 

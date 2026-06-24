@@ -56,10 +56,17 @@
                 </div>
             </header>
 
-            <!-- Alert Banner -->
-            <div class="alert-banner hidden" id="alertBanner">
-                <span class="alert-icon">⚡</span>
-                <span class="alert-text" id="alertText">0 pendientes de tu registro</span>
+            <!-- Pending Transfers Notification -->
+            <div class="pending-notification hidden" id="alertBanner">
+                <div class="pending-notif-icon">
+                    <span class="notif-pulse-ring"></span>
+                    <span class="notif-bell">🔔</span>
+                </div>
+                <div class="pending-notif-body">
+                    <p class="pending-notif-title" id="alertText">Tienes transferencias pendientes</p>
+                    <p class="pending-notif-sub">Revisa los registros de abajo y confirma tu peso</p>
+                </div>
+                <div class="pending-notif-badge" id="pendingBadgeCount">0</div>
             </div>
 
             <!-- New Record Form -->
@@ -227,9 +234,9 @@
         </div>
     </div>
 
-    <script src="config.js?v=8"></script>
-    <script src="utils.js?v=8"></script>
-    <script src="searchable-combo.js?v=8"></script>
-    <script src="transferencias.js?v=8"></script>
+    <script src="config.js?v=9"></script>
+    <script src="utils.js?v=9"></script>
+    <script src="searchable-combo.js?v=9"></script>
+    <script src="transferencias.js?v=9"></script>
 </body>
 </html>

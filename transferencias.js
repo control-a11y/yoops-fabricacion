@@ -341,8 +341,13 @@ function updateAlert(records) {
         }
     });
 
+    const badgeCount = document.getElementById('pendingBadgeCount');
+
     if (pendingCount > 0) {
-        alertText.textContent = `⚡ ${pendingCount} pendiente${pendingCount > 1 ? 's' : ''} de tu registro`;
+        alertText.textContent = pendingCount === 1
+            ? '¡Tienes 1 transferencia pendiente de confirmar!'
+            : `¡Tienes ${pendingCount} transferencias pendientes de confirmar!`;
+        if (badgeCount) badgeCount.textContent = pendingCount;
         alertBanner.classList.remove('hidden');
     } else {
         alertBanner.classList.add('hidden');

@@ -30,29 +30,91 @@
     box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
 }
 
-/* --- Alert Banner --- */
-.alert-banner {
+/* --- Pending Transfers Notification --- */
+.pending-notification {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: rgba(251, 191, 36, 0.08);
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    gap: 14px;
+    padding: 16px;
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: var(--radius-md);
-    margin-bottom: 16px;
-    animation: fadeInUp 0.4s ease-out both, pulse-glow 2s ease-in-out infinite;
-    color: #fbbf24;
-    font-size: 0.88rem;
-    font-weight: 600;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.4s ease-out both, pulse-border-red 2s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
 }
 
-.alert-banner.hidden { display: none; }
+.pending-notification.hidden { display: none; }
 
-.alert-icon { font-size: 1.1rem; }
+.pending-notif-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
-@keyframes pulse-glow {
-    0%, 100% { border-color: rgba(251, 191, 36, 0.2); }
-    50% { border-color: rgba(251, 191, 36, 0.45); }
+.notif-pulse-ring {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(239, 68, 68, 0.6);
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.notif-bell {
+    font-size: 1.2rem;
+    animation: ring 2s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+.pending-notif-body {
+    flex-grow: 1;
+}
+
+.pending-notif-title {
+    color: #fca5a5;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.pending-notif-sub {
+    color: rgba(252, 165, 165, 0.8);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.pending-notif-badge {
+    background: #ef4444;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 6px 14px;
+    border-radius: 100px;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    flex-shrink: 0;
+}
+
+@keyframes pulse-border-red {
+    0%, 100% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 10px rgba(239, 68, 68, 0.05); }
+    50% { border-color: rgba(239, 68, 68, 0.6); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+}
+
+@keyframes ping {
+    75%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes ring {
+    0%, 100% { transform: rotate(0deg); }
+    5%, 15% { transform: rotate(15deg); }
+    10%, 20% { transform: rotate(-15deg); }
+    25% { transform: rotate(0deg); }
 }
 
 /* --- Form auto info --- */
