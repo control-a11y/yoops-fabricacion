@@ -293,8 +293,8 @@ async function loadRecords() {
             let userNames = [currentUser.usuario];
             try {
                 const usersRes = await fetch(
-                    `${SUPABASE_URL}/rest/v1/usuarios?nombre_local=eq.${encodeURIComponent(currentUser.nombre_local)}&select=usuario`,
-                    { headers: HEADERS }
+                    `${SUPABASE_URL}/rest/v1/rpc/usuarios_por_local_fabricacion`,
+                    { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_nombre_local: currentUser.nombre_local }) }
                 );
                 if (usersRes.ok) {
                     const localUsers = await usersRes.json();

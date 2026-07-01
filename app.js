@@ -116,8 +116,8 @@ function clearSessionLocal() {
 
 async function loginUser_api(usuario, contrasena) {
     const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/usuarios?usuario=eq.${encodeURIComponent(usuario)}&contrasena=eq.${encodeURIComponent(contrasena)}&activo=eq.true&select=*`,
-        { headers: HEADERS }
+        `${SUPABASE_URL}/rest/v1/rpc/login_usuario_fabricacion`,
+        { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_usuario: usuario, p_contrasena: contrasena }) }
     );
     if (!res.ok) throw new Error('Error de conexión');
     const users = await res.json();
@@ -126,35 +126,23 @@ async function loginUser_api(usuario, contrasena) {
 }
 
 async function registerUser_api(usuario, contrasena, nombre_local) {
-    const checkRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/usuarios?usuario=eq.${encodeURIComponent(usuario)}&select=id`,
-        { headers: HEADERS }
-    );
-    if (!checkRes.ok) throw new Error('Error de conexión');
-    const existing = await checkRes.json();
-    if (existing.length > 0) throw new Error('USUARIO_EXISTE');
-
     const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/usuarios`,
-        {
-            method: 'POST',
-            headers: HEADERS,
-            body: JSON.stringify({ usuario, contrasena, nombre_local, activo: true })
-        }
+        `${SUPABASE_URL}/rest/v1/rpc/registrar_usuario_fabricacion`,
+        { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_usuario: usuario, p_contrasena: contrasena, p_nombre_local: nombre_local }) }
     );
-    if (!res.ok) throw new Error('Error al crear usuario');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if ((err.message || '').includes('USUARIO_EXISTE')) throw new Error('USUARIO_EXISTE');
+        throw new Error('Error al crear usuario');
+    }
     const result = await res.json();
     return result[0];
 }
 
 async function updateUserLocal(userId, nombre_local) {
     const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`,
-        {
-            method: 'PATCH',
-            headers: HEADERS,
-            body: JSON.stringify({ nombre_local })
-        }
+        `${SUPABASE_URL}/rest/v1/rpc/actualizar_local_usuario_fabricacion`,
+        { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_id: userId, p_nombre_local: nombre_local }) }
     );
     if (!res.ok) throw new Error('Error al actualizar local');
     const result = await res.json();
@@ -419,8 +407,8 @@ async function checkPendingTransfers(user) {
             let userNames = [user.usuario];
             try {
                 const usersRes = await fetch(
-                    `${SUPABASE_URL}/rest/v1/usuarios?nombre_local=eq.${encodeURIComponent(user.nombre_local)}&select=usuario`,
-                    { headers: HEADERS }
+                    `${SUPABASE_URL}/rest/v1/rpc/usuarios_por_local_fabricacion`,
+                    { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_nombre_local: user.nombre_local }) }
                 );
                 if (usersRes.ok) {
                     const localUsers = await usersRes.json();
@@ -481,8 +469,8 @@ async function init() {
     if (session && session.id && session.nombre_local) {
         try {
             const res = await fetch(
-                `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${session.id}&activo=eq.true&select=*`,
-                { headers: HEADERS }
+                `${SUPABASE_URL}/rest/v1/rpc/validar_sesion_fabricacion`,
+                { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_id: session.id }) }
             );
             if (res.ok) {
                 const users = await res.json();

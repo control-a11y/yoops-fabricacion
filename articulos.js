@@ -84,8 +84,8 @@ async function verifyAdmin() {
 
     try {
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${session.id}&activo=eq.true&select=*`,
-            { headers: HEADERS }
+            `${SUPABASE_URL}/rest/v1/rpc/validar_sesion_fabricacion`,
+            { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_id: session.id }) }
         );
 
         if (!res.ok) throw new Error('Error de conexión');

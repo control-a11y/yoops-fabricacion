@@ -86,11 +86,11 @@ function clearSession() {
 async function verifySession(user) {
     try {
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/usuarios?usuario=eq.${encodeURIComponent(user.usuario)}&activo=eq.true&select=usuario,nombre_local,rol`,
-            { headers: HEADERS }
+            `${SUPABASE_URL}/rest/v1/rpc/validar_sesion_fabricacion`,
+            { method: 'POST', headers: HEADERS, body: JSON.stringify({ p_id: user.id }) }
         );
         const rows = await res.json();
-        if (rows.length === 0) {
+        if (!Array.isArray(rows) || rows.length === 0) {
             clearSession();
             return null;
         }
